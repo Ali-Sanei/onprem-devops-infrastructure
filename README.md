@@ -21,3 +21,9 @@ Production-like on-prem DevOps infrastructure using ESXi, Linux, Ansible, Docker
 - Ansible
 - Docker
 - Jenkins
+
+## Security
+- SSH key-based authentication
+- Root login disabled
+- UFW enabled
+
