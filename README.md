@@ -27,3 +27,7 @@ Production-like on-prem DevOps infrastructure using ESXi, Linux, Ansible, Docker
 - Root login disabled
 - UFW enabled
 
+## CI/CD
+- Jenkins running on dedicated CI server
+- Docker used for application deployment
+
