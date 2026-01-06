@@ -5,7 +5,7 @@ pipeline {
         // مسیر به private key که توی Jenkins credentials اضافه کردی
         SSH_CREDENTIALS = 'devops-ssh'
         // مسیر کامل به ansible playbook روی CI server
-        ANSIBLE_PLAYBOOK_PATH = '/home/ci-user/devops-lab/ansible/playbooks/site.yml'
+        ANSIBLE_PLAYBOOK_PATH = '/home/devops/devops-lab/ansible/playbooks/site.yml'
     }
 
     stages {
