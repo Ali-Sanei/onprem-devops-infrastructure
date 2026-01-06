@@ -31,7 +31,7 @@ pipeline {
                 // استفاده از SSH agent برای اتصال بدون پسورد به app-server
                 sshagent(credentials: [env.SSH_CREDENTIALS]) {
                     sh """
-                        ansible-playbook ${env.ANSIBLE_PLAYBOOK_PATH} --limit app
+                        ansible-playbook /home/devops/devops-lab/ansible/playbooks/site.yml --limit app
                     """
                 }
             }
