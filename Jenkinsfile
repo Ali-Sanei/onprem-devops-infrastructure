@@ -5,7 +5,7 @@ pipeline {
         // مسیر به private key که توی Jenkins credentials اضافه کردی
         SSH_CREDENTIALS = 'devops-ssh'
         // مسیر کامل به ansible playbook روی CI server
-        ANSIBLE_PLAYBOOK_PATH = '/home/devops/devops-lab/ansible/playbooks/site.yml'
+        ANSIBLE_PLAYBOOK_PATH = '/home/jenkins/ansible/playbooks/site.yml'
     }
 
     stages {
@@ -31,7 +31,7 @@ pipeline {
                 // استفاده از SSH agent برای اتصال بدون پسورد به app-server
                 sshagent(credentials: [env.SSH_CREDENTIALS]) {
                     sh """
-                        ansible-playbook /home/devops/devops-lab/ansible/playbooks/site.yml --limit app
+                        ansible-playbook /home/jenkins/ansible/playbooks/site.yml --limit app
                     """
                 }
             }
