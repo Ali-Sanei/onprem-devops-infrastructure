@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  role_name: docker
+  author: ali-sanei
+  description: Ensure Docker is installed, runnig and properly configured
+  license: MIT
+  min_ansible_version: 2.14
