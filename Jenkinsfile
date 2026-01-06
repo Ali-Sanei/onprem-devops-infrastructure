@@ -32,6 +32,7 @@ pipeline {
                 sshagent(credentials: [env.SSH_CREDENTIALS]) {
                     dir('/home/jenkins/ansible'){
                         sh 'ansible-playbook playbooks/site.yml --limit app'
+                    }
                 }
             }
         }
