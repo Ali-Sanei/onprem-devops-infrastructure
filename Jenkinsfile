@@ -30,7 +30,7 @@ pipeline {
             steps {
                 // استفاده از SSH agent برای اتصال بدون پسورد به app-server
                 sshagent(credentials: [env.SSH_CREDENTIALS]) {
-                    dir('/home/jenkins/ansible'){
+                    dir("${env.WORKSPACE}/ansible"){
                         sh 'ansible-playbook playbooks/site.yml --limit app'
                     }
                 }
