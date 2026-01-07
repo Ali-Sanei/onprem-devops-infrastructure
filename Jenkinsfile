@@ -1,30 +1,45 @@
 pipeline {
-  agent any
+  agent { label 'app-server-agent' }
+
+  options {
+    timestamps()
+  }
 
   stages {
-    stage('Checkout') {
+
+    stage('Checkout Source') {
       steps {
-        git 'https://github.com/Ali-Sanei/onprem-devops-infrastructure.git'
+        checkout scm
       }
     }
 
-    stage('Deploy with Ansible') {
+    stage('Build Docker Image') {
       steps {
-        sshagent(['devops']) {
-          dir('ansible') {
-            sh 'ansible-playbook playbooks/site.yml --limit app'
-          }
-        }
+        sh '''
+          docker build -t my-nginx:latest app/
+        '''
+      }
+    }
+
+    stage('Deploy Container') {
+      steps {
+        sh '''
+          docker rm -f my-nginx || true
+          docker run -d \
+            --name my-nginx \
+            -p 80:80 \
+            my-nginx:latest
+        '''
       }
     }
   }
 
   post {
-    failure {
-      echo 'Pipeline failed!'
-    }
     success {
-      echo 'Deployment successful!'
+      echo '✅ Deployment completed successfully'
+    }
+    failure {
+      echo '❌ Deployment failed'
     }
   }
 }
