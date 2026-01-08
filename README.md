@@ -58,4 +58,13 @@ In Day 7, a complete CI/CD pipeline was implemented using Jenkins.
 
 This was the first fully automated CI/CD workflow in the project.
 
+### CI/CD Pipelines
+
+- **infra-pipeline**  
+  Provisions infrastructure using Ansible (Docker, Java, Jenkins agent)
+
+- **app-pipeline**  
+  Builds Docker image and deploys application to app-server
+
+
 
