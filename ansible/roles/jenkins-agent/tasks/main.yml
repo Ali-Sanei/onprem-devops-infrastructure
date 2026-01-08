@@ -1,0 +1,7 @@
+---
+- name: Ensure required packages for Jenkins agent
+  apt:
+    name:
+      - curl
+      - ca-certificates
+    state: present

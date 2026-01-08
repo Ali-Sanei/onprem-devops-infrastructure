@@ -1,0 +1,23 @@
+pipeline {
+  agent any
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Run Infra Ansible') {
+      steps {
+        sshagent(['devops-ssh']) {
+          sh '''
+            cd ansible
+            ansible-playbook playbooks/infra.yml
+          '''
+        }
+      }
+    }
+  }
+}
+

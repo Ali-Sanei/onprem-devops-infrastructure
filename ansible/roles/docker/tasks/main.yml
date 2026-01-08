@@ -1,14 +1,8 @@
-- name: Check Docker binary exists
-  command: docker --version
-  register: docker_check
-  ignore_errors: yes
-
-- name: Install Docker (if not exists)
+- name: Ensure Docker is installed
   apt:
     name: docker.io
     state: present
     update_cache: yes
-  when: docker_check.failed
 
 - name: Ensure Docker service is running
   service:
@@ -16,30 +10,9 @@
     state: started
     enabled: true
 
-- name: Create app directory
-  file:
-    path: /opt/nginx-app
-    state: directory
-    mode: '0755'
-
-- name: Copy app files
-  copy:
-    src: app/
-    dest: /opt/nginx-app/
-
-- name: Build nginx image on app-server
-  community.docker.docker_image:
-    name: my-nginx
-    tag: latest
-    build:
-      path: /home/devops/app
-
-- name: Run nginx container
-  community.docker.docker_container:
-    name: nginx
-    image: my-nginx:latest
-    state: started
-    ports:
-      - "80:80"
-    restart_policy: always
+- name: Add devops user to docker group
+  user:
+    name: devops
+    groups: docker
+    append: yes
 

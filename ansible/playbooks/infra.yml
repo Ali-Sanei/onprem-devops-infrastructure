@@ -1,0 +1,8 @@
+---
+- name: Prepare infrastructure
+  hosts: app
+  become: true
+  roles:
+    - docker
+    - java
+    - jenkins_agent

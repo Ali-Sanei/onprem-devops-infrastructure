@@ -1,0 +1,6 @@
+---
+- name: Ensure Java is installed
+  apt:
+    name: openjdk-17-jdk
+    state: present
+    update_cace: yes
