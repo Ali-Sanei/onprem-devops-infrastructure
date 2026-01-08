@@ -1,5 +1,5 @@
 # onprem-devops-infrastructure
-Production-like on-prem DevOps infrastructure using ESXi, Linux, Ansible, Docker, Jenkins and monitoring tools.
+A production-like on-prem DevOps infrastructure built using ESXi, Linux, Ansible, Docker, Jenkins, and monitoring tools.
 
 
 ## Project Overview
@@ -30,4 +30,32 @@ Production-like on-prem DevOps infrastructure using ESXi, Linux, Ansible, Docker
 ## CI/CD
 - Jenkins running on dedicated CI server
 - Docker used for application deployment
+
+## Day 7 – Jenkins CI/CD Pipeline with Docker & Ansible
+
+In Day 7, a complete CI/CD pipeline was implemented using Jenkins.
+
+### 🔧 Architecture
+- **CI Server**: Jenkins  
+- **App Server**: Docker runtime (application deployment)
+- Jenkins connects to app-server via SSH agent.
+
+### 🚀 Pipeline Workflow
+1. Checkout source code from GitHub
+2. Build Docker image for a simple Nginx application
+3. Deploy and run the container on the app-server
+
+### 📦 Technologies Used
+- Jenkins (Declarative Pipeline)
+- Docker
+- Ansible
+- SSH Agent
+
+### ✅ Result
+- Jenkins pipeline executed successfully
+- Docker container deployed on app-server
+- Application accessible via app-server IP in browser
+
+This was the first fully automated CI/CD workflow in the project.
+
 
