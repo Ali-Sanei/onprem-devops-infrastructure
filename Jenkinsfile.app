@@ -1,45 +1,40 @@
 pipeline {
-  agent { label 'app-server-agent' }
+  agent any
 
-  options {
-    timestamps()
+  environment {
+    APP_NAME = "myapp"
   }
 
   stages {
-
-    stage('Checkout Source') {
+    stage('Checkout') {
       steps {
         checkout scm
       }
     }
 
-    stage('Build Docker Image') {
+    stage('Read Version') {
       steps {
-        sh '''
-          docker build -t my-nginx:latest app/
-        '''
+        script {
+          env.VERSION = readFile('app/version.txt').trim()
+        }
       }
     }
 
-    stage('Deploy Container') {
+    stage('Build Image') {
       steps {
-        sh '''
-          docker rm -f my-nginx || true
-          docker run -d \
-            --name my-nginx \
-            -p 80:80 \
-            my-nginx:latest
-        '''
+        sh """
+          docker build -t ${APP_NAME}:${VERSION} app
+        """
       }
     }
-  }
 
-  post {
-    success {
-      echo '✅ Deployment completed successfully'
-    }
-    failure {
-      echo '❌ Deployment failed'
+    stage('Deploy') {
+      steps {
+        sh """
+          docker rm -f ${APP_NAME} || true
+          docker run -d --name ${APP_NAME} ${APP_NAME}:${VERSION}
+        """
+      }
     }
   }
 }

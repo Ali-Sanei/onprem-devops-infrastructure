@@ -1,3 +1,5 @@
-FROM nginx:alpine
-COPY index.html /usr/share/nginx/html/index.html
-
+FROM alpne:3.20 
+WORKDIR /app
+COPY app.sh version.txt ./
+RUN chmod +x app.sh
+CMD ["./app.sh"]
