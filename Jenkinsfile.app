@@ -1,5 +1,5 @@
 pipeline {
-  agent any
+  agent {label 'app-server-agent'}
 
   environment {
     APP_NAME = "myapp"
