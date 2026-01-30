@@ -3,4 +3,4 @@
   apt:
     name: openjdk-17-jdk
     state: present
-    update_cace: yes
+    update_cache: yes
