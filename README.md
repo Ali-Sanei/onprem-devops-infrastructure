@@ -66,5 +66,25 @@ This was the first fully automated CI/CD workflow in the project.
 - **app-pipeline**  
   Builds Docker image and deploys application to app-server
 
+  ## Day 8 – Infrastructure as Code with Ansible
+
+In Day 8, infrastructure provisioning was fully automated using Ansible and executed via Jenkins.
+
+### 🔧 Implemented Features
+- Docker installation and configuration via Ansible
+- Java installation via Ansible
+- User permission management (docker group)
+- Idempotent infrastructure setup
+
+### 🚀 CI Integration
+- Dedicated Jenkins infra pipeline
+- Ansible executed on app-server via SSH agent
+- Clear separation between infrastructure and application pipelines
+
+### ✅ Result
+- Infrastructure fully provisioned from code
+- Jenkins infra pipeline completed successfully
+
+
 
 
