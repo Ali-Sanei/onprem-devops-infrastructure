@@ -85,6 +85,26 @@ In Day 8, infrastructure provisioning was fully automated using Ansible and exec
 - Infrastructure fully provisioned from code
 - Jenkins infra pipeline completed successfully
 
+## Day 9 – Versioned Docker Deployment with Rollback
+
+### Features
+- Docker images built with semantic versioning
+- Jenkins pipeline executed on app-server agent
+- Automatic rollback to previous version on failure
+- Safe container replacement without manual intervention
+
+### Workflow
+1. Read application version from repository
+2. Save currently running container version
+3. Build new Docker image
+4. Deploy new version
+5. Roll back automatically if deployment fails
+
+### Result
+- Zero manual intervention deployment
+- High reliability deployment strategy
+
+
 
 
 
