@@ -1,4 +1,4 @@
-FROM alpine:3.20 
+FROM alpne:3.20 
 WORKDIR /app
 COPY app.sh version.txt ./
 RUN chmod +x app.sh
