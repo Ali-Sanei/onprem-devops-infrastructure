@@ -66,7 +66,7 @@ This was the first fully automated CI/CD workflow in the project.
 - **app-pipeline**  
   Builds Docker image and deploys application to app-server
 
-  ## Day 8 – Infrastructure as Code with Ansible
+## Day 8 – Infrastructure as Code with Ansible
 
 In Day 8, infrastructure provisioning was fully automated using Ansible and executed via Jenkins.
 
