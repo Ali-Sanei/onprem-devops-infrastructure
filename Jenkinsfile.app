@@ -45,7 +45,7 @@ pipeline {
           docker run -d \
             --name myapp-$NEW \
             -p $PORT:8080 \
-            myapp:$VERSION
+            myapp:1.0.1
         '''
       }
     }
