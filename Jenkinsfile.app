@@ -53,7 +53,7 @@ pipeline {
       steps {
         sh '''
           sleep 5
-          curl -f http://localhost:$PORT/health.sh
+          docker exec myapp-${NEW} ./health.sh
         '''
       }
     }
