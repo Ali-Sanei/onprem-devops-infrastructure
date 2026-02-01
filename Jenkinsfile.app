@@ -1,55 +1,86 @@
 pipeline {
-  agent { label 'app-server' }
+  agent { label 'app-server-agent' }
 
   environment {
     APP_NAME = "myapp"
     VERSION = readFile('app/version.txt').trim()
-    PREVIOUS_VERSION_FILE = "/tmp/myapp_prev_version"
+    BLUE_PORT = "8081"
+    GREEN_PORT = "8082"
   }
 
   stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }
 
-    stage('Save Current Version') {
+    stage('Detect Active Color') {
       steps {
         sh '''
-          docker images --format "{{.Repository}}:{{.Tag}}" | grep ${APP_NAME} | head -n 1 | cut -d: -f2 > ${PREVIOUS_VERSION_FILE} || true
+          if docker ps --format "{{.Names}}" | grep -q myapp-blue; then
+            echo "blue" > /tmp/active_color
+          else
+            echo "green" > /tmp/active_color
+          fi
         '''
       }
     }
 
     stage('Build Image') {
       steps {
-        sh """
-          docker build -t ${APP_NAME}:${VERSION} app/
-        """
+        sh "docker build -t ${APP_NAME}:${VERSION} app/"
       }
     }
 
-    stage('Deploy') {
+    stage('Deploy New Color') {
       steps {
-        sh """
-          docker rm -f ${APP_NAME} || true
-          docker run -d --name ${APP_NAME} ${APP_NAME}:${VERSION}
-        """
+        sh '''
+          ACTIVE=$(cat /tmp/active_color)
+          if [ "$ACTIVE" = "blue" ]; then
+            NEW=green
+            PORT=$GREEN_PORT
+          else
+            NEW=blue
+            PORT=$BLUE_PORT
+          fi
+
+          docker rm -f myapp-$NEW || true
+          docker run -d \
+            --name myapp-$NEW \
+            -p $PORT:8080 \
+            myapp:$VERSION
+        '''
       }
     }
-  }
 
-  post {
-    failure {
-      echo "❌ Deploy failed. Rolling back..."
-      sh '''
-        if [ -f ${PREVIOUS_VERSION_FILE} ]; then
-          PREV_VERSION=$(cat ${PREVIOUS_VERSION_FILE})
-          docker rm -f ${APP_NAME} || true
-          docker run -d --name ${APP_NAME} ${APP_NAME}:${PREV_VERSION}
-        fi
-      '''
+    stage('Health Check') {
+      steps {
+        sh '''
+          sleep 5
+          curl -f http://localhost:$PORT/health.sh
+        '''
+      }
+    }
+
+    stage('Switch Traffic') {
+      steps {
+        sh '''
+          sed "s/{{ACTIVE_COLOR}}/myapp-$NEW/" nginx/templates/upstream.conf.tpl \
+            > nginx/conf.d/upstream.conf
+
+          docker rm -f nginx || true
+          docker run -d \
+            --name nginx \
+            -p 80:80 \
+            -v $(pwd)/nginx:/etc/nginx \
+            nginx
+        '''
+      }
+    }
+
+    stage('Cleanup Old Color') {
+      steps {
+        sh '''
+          ACTIVE=$(cat /tmp/active_color)
+          docker rm -f myapp-$ACTIVE || true
+        '''
+      }
     }
   }
 }
