@@ -30,16 +30,17 @@ pipeline {
 
     stage('Deploy New Color') {
       steps {
-        sh '''
-          ACTIVE=$(cat /tmp/active_color)
-          if [ "$ACTIVE" = "blue" ]; then
-            NEW=green
-            PORT=$GREEN_PORT
-          else
-            NEW=blue
-            PORT=$BLUE_PORT
-          fi
+	script {
+	  def active = sh(
+	    script: "cat /tmp/active_color",
+	    returnStdout: true
+	  ).trim()
 
+	  env.NeW = (active == 'blue') ? 'green' : 'blue'
+          env.PORT = (env.NEW == 'blue') ? '8081' : '8082'
+	}
+      
+        sh '''
           docker rm -f myapp-$NEW || true
           docker run -d \
             --name myapp-$NEW \
