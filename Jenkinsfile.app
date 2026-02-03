@@ -13,10 +13,10 @@ pipeline {
     stage('Detect Active Color') {
       steps {
         sh '''
-          if docker ps --format "{{.Names}}" | grep -q myapp-blue; then
-            echo "blue" > /tmp/active_color
+          if docker ps --format '{{.Names}}' | grep -q myapp-blue; then
+            echo blue > /tmp/active_color
           else
-            echo "green" > /tmp/active_color
+            echo green > /tmp/active_color
           fi
         '''
       }
