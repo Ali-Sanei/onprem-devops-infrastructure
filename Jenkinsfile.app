@@ -43,8 +43,8 @@ pipeline {
         sh '''
           docker rm -f myapp-$NEW || true
           docker run -d \
-            --name myapp-$NEW \
-            -p $PORT:8080 \
+            --name myapp-${NEW} \
+            -p ${PORT}:8080 \
             myapp:1.0.1
         '''
       }
