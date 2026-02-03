@@ -36,12 +36,12 @@ pipeline {
 	    returnStdout: true
 	  ).trim()
 
-	  env.NeW = (active == 'blue') ? 'green' : 'blue'
+	  env.NEW = (active == 'blue') ? 'green' : 'blue'
           env.PORT = (env.NEW == 'blue') ? '8081' : '8082'
 	}
       
         sh '''
-          docker rm -f myapp-$NEW || true
+          docker rm -f myapp-${NEW} || true
           docker run -d \
             --name myapp-${NEW} \
             -p ${PORT}:8080 \
