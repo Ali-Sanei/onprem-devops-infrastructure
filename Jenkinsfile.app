@@ -30,22 +30,18 @@ pipeline {
 
     stage('Deploy New Color') {
       steps {
-	script {
-	  def active = sh(
-	    script: "cat /tmp/active_color",
-	    returnStdout: true
-	  ).trim()
+        script {
+          def active = sh(script: "cat /tmp/active_color", returnStdout: true).trim()
+          env.NEW = (active == 'blue') ? 'green' : 'blue'
+          env.PORT = (env.NEW == 'blue') ? BLUE_PORT : GREEN_PORT
+        }
 
-	  env.NEW = (active == 'blue') ? 'green' : 'blue'
-          env.PORT = (env.NEW == 'blue') ? '8081' : '8082'
-	}
-      
         sh '''
           docker rm -f myapp-${NEW} || true
           docker run -d \
             --name myapp-${NEW} \
             -p ${PORT}:8080 \
-            myapp:1.0.1
+            myapp:${VERSION}
         '''
       }
     }
@@ -61,18 +57,20 @@ pipeline {
 
     stage('Switch Traffic') {
       steps {
-        sh '''
-	  mkdir -p nginx/conf.d
-          sed "s/{{ACTIVE_COLOR}}/myapp-${NEW}/" nginx/template/upstream.conf.tpl \
-            > nginx/conf.d/upstream.conf
+        script {
+          def workspaceDir = pwd()
+          sh """
+            mkdir -p "${workspaceDir}/nginx/conf.d"
+            sed "s/{{ACTIVE_COLOR}}/myapp-${NEW}/" "${workspaceDir}/nginx/template/upstream.conf.tpl" > "${workspaceDir}/nginx/conf.d/upstream.conf"
 
-          docker rm -f nginx || true
-          docker run -d \
-            --name nginx \
-            -p 80:80 \
-            -v $(pwd)/nginx:/etc/nginx \
-            nginx
-        '''
+            docker rm -f nginx || true
+            docker run -d \
+              --name nginx \
+              -p 80:80 \
+              -v "${workspaceDir}/nginx:/etc/nginx" \
+              nginx
+          """
+        }
       }
     }
 
@@ -84,6 +82,7 @@ pipeline {
         '''
       }
     }
+
   }
 }
 
