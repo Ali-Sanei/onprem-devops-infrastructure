@@ -62,7 +62,8 @@ pipeline {
     stage('Switch Traffic') {
       steps {
         sh '''
-          sed "s/{{ACTIVE_COLOR}}/myapp-$NEW/" nginx/templates/upstream.conf.tpl \
+	  mkdir -p nginx/conf.d
+          sed "s/{{ACTIVE_COLOR}}/myapp-${NEW}/" nginx/templates/upstream.conf.tpl \
             > nginx/conf.d/upstream.conf
 
           docker rm -f nginx || true
