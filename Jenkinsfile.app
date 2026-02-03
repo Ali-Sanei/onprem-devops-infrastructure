@@ -54,7 +54,7 @@ pipeline {
       steps {
         sh '''
           sleep 5
-          docker exec myapp-${NEW} ./health.sh
+          docker exec myapp-${NEW} /app/health.sh
         '''
       }
     }
