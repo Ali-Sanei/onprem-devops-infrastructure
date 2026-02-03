@@ -63,7 +63,7 @@ pipeline {
       steps {
         sh '''
 	  mkdir -p nginx/conf.d
-          sed "s/{{ACTIVE_COLOR}}/myapp-${NEW}/" nginx/templates/upstream.conf.tpl \
+          sed "s/{{ACTIVE_COLOR}}/myapp-${NEW}/" nginx/template/upstream.conf.tpl \
             > nginx/conf.d/upstream.conf
 
           docker rm -f nginx || true
