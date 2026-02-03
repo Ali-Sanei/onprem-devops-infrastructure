@@ -104,6 +104,21 @@ In Day 8, infrastructure provisioning was fully automated using Ansible and exec
 - Zero manual intervention deployment
 - High reliability deployment strategy
 
+## Day 10 – Blue/Green Deployment
+In Day 10, a Blue/Green deployment strategy was implemented to achieve zero-downtime releases.
+
+### Features
+- Parallel Blue and Green application containers on the app-server
+- Jenkins pipeline detects active version automatically
+- New version deployed to inactive color
+- Health check validation before traffic switch
+- Nginx dynamically routes traffic to the active container
+
+### Result
+- Zero-downtime application deployment
+- Safer releases with instant rollback capability
+- Production-like deployment strategy implemented on-prem
+
 
 
 
