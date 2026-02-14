@@ -25,6 +25,10 @@ pipeline {
         ansiblePlaybook (
 	  playbook: 'ansible/playbooks/infra.yml',
           inventory: 'ansible/inventory/hosts.ini'
+	  installation: 'ansible',
+          credentialsId: '',
+          extras: '',
+          ansibleCfg: 'ansible/ansible.cfg'
 	  
         )
       }
