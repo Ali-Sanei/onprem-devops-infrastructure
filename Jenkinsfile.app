@@ -22,15 +22,10 @@ pipeline {
 
     stage( 'Ensure nginx via Ansible' ) {
       steps {
-        ansiblePlaybook (
-	  playbook: 'ansible/playbooks/infra.yml',
-          inventory: 'ansible/inventory/hosts.ini',
-	  installation: 'ansible',
-          credentialsId: '',
-          extras: '',
-          ansibleCfg: 'ansible/ansible.cfg'
-	  
-        )
+        sh '''
+           cd ansible
+           ansible-playbook playbooks/infra.yml
+        '''
       }
     }
 
