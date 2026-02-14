@@ -24,8 +24,8 @@ pipeline {
       steps {
         ansiblePlaybook (
 	  playbook: 'ansible/playbooks/infra.yml',
-          inventory: 'ansible/inventory/hosts.ini',
-	  extras: '--roles-path ansible/roles'
+          inventory: 'ansible/inventory/hosts.ini'
+	  
         )
       }
     }
