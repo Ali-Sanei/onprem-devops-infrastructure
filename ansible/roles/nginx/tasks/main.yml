@@ -1,0 +1,34 @@
+- name: Ensure docker network exists
+  community.docker.docker_network:
+    name: "{{ nginx_network }}"
+
+- name: Create nginx config directory
+  file:
+    path: "{{ nginx_conf_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy nginx.conf
+  copy:
+    src: ../../../nginx/nginx.conf
+    dest: "{{ nginx_conf_path}}/nginx.conf"
+    notify: Reload nginx
+
+- name: Copy upstream template
+  copy: 
+    src: ../../../nginx/template/upstream.conf.tpl
+    dest: "{{ nginx_conf_path }}/upstream.com"
+  notify: Reload nginx
+
+- name: Run nginx container
+  community.docker.docker_container:
+    name: "{{ nginx_container_name}}"
+    image: "{{ nginx_image }}"
+    state: started
+    restart_policy: always
+    networks:
+      - name: "{{ nginx_network }}"
+    published_ports:
+      - "{{ nginx_host_port }}:{{ nginx_container_port }}"
+    volumes:
+      - "{{ nginx_conf_path}}:/etc/nginx"
