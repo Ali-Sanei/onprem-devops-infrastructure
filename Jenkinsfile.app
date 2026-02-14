@@ -25,7 +25,7 @@ pipeline {
         ansiblePlaybook (
 	  playbook: 'ansible/playbooks/infra.yml',
           inventory: 'ansible/inventory/hosts.ini',
-	  colorized: true
+	  extras: '--roles-path ansible/roles'
         )
       }
     }
