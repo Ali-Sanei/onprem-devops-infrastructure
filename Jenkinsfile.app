@@ -24,7 +24,7 @@ pipeline {
       steps {
         ansiblePlaybook (
 	  playbook: 'ansible/playbooks/infra.yml',
-          inventory: 'ansible/inventory/hosts.ini'
+          inventory: 'ansible/inventory/hosts.ini',
 	  installation: 'ansible',
           credentialsId: '',
           extras: '',
