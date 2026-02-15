@@ -12,7 +12,7 @@
   copy:
     src: ../../../nginx/nginx.conf
     dest: "{{ nginx_conf_path}}/nginx.conf"
-    notify: Reload nginx
+  notify: Reload nginx
 
 - name: Copy upstream template
   copy: 
