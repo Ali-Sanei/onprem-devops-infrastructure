@@ -42,22 +42,23 @@ pipeline {
       steps {
         script {
           def active = sh(
-            script: "docker ps --format '{{.Names}}' | grep -E '${BLUE}|${GREEN}' || true",
+            script: "docker ps --format '{{.Names}}' | grep -E 'myapp-blue|green' || true",
             returnStdout: true
           ).trim()
 
           if (active.contains("blue")) {
-            env.ACTIVE = "blue"
-            env.NEW = "green"
-            env.PORT = GREEN_PORT
+            env.ACTIVE_COLOR = "blue"
+            env.NEW_COLOR = "green"
+            env.NEW_PORT = "8082"
           } else {
-            env.ACTIVE = "green"
-            env.NEW = "blue"
-            env.PORT = BLUE_PORT
+            env.ACTIVE_COLOR = "green"
+            env.NEW_COLOR = "blue"
+            env.NEW_PORT = "8081"
           }
 
-          echo "Active: ${env.ACTIVE}"
-          echo "Deploying: ${env.NEW}"
+          echo "Active: ${env.ACTIVE_COLOR}"
+          echo "Deploying: ${env.NEW_COLOR}"
+          echo "New Port: ${env.NEW_PORT}"
         }
       }
     }
