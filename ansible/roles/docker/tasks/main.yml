@@ -35,15 +35,28 @@
     state: started
 
 
-- name: Wait for Docker daemon to be ready
-  shell: |
-    until docker info > /dev/null 2>&1; do
-      sleep 2
-    done
-  retries: 10
-  delay: 3
-  register: docker_ready
-  until: docker_ready.rc == 0
+- name: Wait for Docker daemon and restart if needed
+  block:
+    - name: Check if Docker is running
+      shell: docker info > /dev/null 2>&1
+      register: docker_ready
+      ignore_errors: yes
+
+    - name: Restart Docker if not running
+      service:
+        name: docker
+        state: restarted
+      when: docker_ready.failed
+
+    - name: Wait for Docker daemon to be ready
+      shell: |
+        until docker info > /dev/null 2>&1; do
+          echo "Waiting for Docker daemon..."
+          sleep 2
+        done
+      retries: 10
+      delay: 3
+      register: docker_ready_wait
 
 - name: Add devops user to docker group
   user:
