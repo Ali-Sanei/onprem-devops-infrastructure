@@ -33,3 +33,20 @@
     name : docker.socket
     enabled: yes
     state: started
+
+
+- name: Wait for Docker daemon to be ready
+  shell: |
+    until docker info > /dev/null 2>&1; do
+      sleep 2
+    done
+  retries: 10
+  delay: 3
+  register: docker_ready
+  until: docker_ready.rc == 0
+
+- name: Add devops user to docker group
+  user:
+    name: devops
+    groups: docker
+    append: yes
