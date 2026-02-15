@@ -1,6 +1,6 @@
 nginx_container_name: nginx
 nginx_image: nginx:alpine 
 nginx_network: app-net
-ngix_host_port: 80
+nginx_host_port: 80
 nginx_container_port: 80
 nginx_conf_path: /opt/nginx
