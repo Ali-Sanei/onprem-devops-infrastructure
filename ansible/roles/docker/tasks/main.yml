@@ -1,26 +1,14 @@
-- name: Remove old Docker packages
-  apt:
-    name:
-      - docker
-      - docker.io
-      - containerd
-      - containerd.io
-      - runc
-    state: absent
-    purge: yes
-  ignore_errors: true
-
-- name: Ensure Docker is installed
+- name: install docker
   apt:
     name: docker.io
     state: present
     update_cache: yes
 
-- name: Ensure Docker service is running
-  service:
+- name: Enable and start Docker
+  systemd:
     name: docker
+    enabled: yes
     state: started
-    enabled: true
 
 - name: Add devops user to docker group
   user:
@@ -28,35 +16,9 @@
     groups: docker
     append: yes
 
-- name: Enable docker socket
-  systemd:
-    name : docker.socket
-    enabled: yes
-    state: started
-
-
-- name: Ensure Docker service is running
-  service:
-    name: docker
-    state: started
-    enabled: true
-
-- name: Wait for Docker daemon to be ready
-  shell: docker info > /dev/null 2>&1
+- name: Wait for Docker daemon 
+  shell: docker info
   register: docker_ready
   retries: 10
   delay: 3
   until: docker_ready.rc == 0
-  ignore_errors: true
-
-- name: Restart Docker if still not ready
-  service:
-    name: docker
-    state: restarted
-  when: docker_ready.rc != 0
-
-- name: Add devops user to docker group
-  user:
-    name: devops
-    groups: docker
-    append: yes
