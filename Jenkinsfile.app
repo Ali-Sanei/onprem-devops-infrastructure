@@ -89,22 +89,35 @@ pipeline {
 
     stage('Health Check') {
       steps {
-        sh '''
-          echo "Waiting for app to start..."
-          sleep 5
+	  script {
+	      def maxRetries = 10
+              def delaySeconds = 3
+              def healthUrl = "http://localhost:${NEW_PORT}"
 
-          for i in {1..10}; do
-            if curl -fs http://${APP_NAME}-${NEW}:8080; then
-              echo "Health check passed"
-              exit 0
-            fi
-            echo "Retry $i..."
-            sleep 3
-          done
+              echo "Starting health check for ${NEW_COLOR} on ${healthUrl}"
+              
+              def healthy = false
 
-          echo "Health check failed!"
-          exit 1
-        '''
+              for (int i = 1; i <= maxRetries; i++) {
+                  def status = sh (
+                      script: "curl -s -o /dev/null -w \"%{http_code}\" ${healthUrl} || true",
+                      returnStdout: true
+                  ).trim()
+                  
+                  if (status == "200") {
+                      echo "Health check passed on attempt ${i}"
+                      healthy = true
+                      break
+                  } else {
+                     echo "Attempt ${i}/${maxRetries} failed (HTTP ${status}). Retrying in ${delaySeconds}s..."
+                     sleep delaySeconds
+                  }
+              } 
+              
+              if (!healthy) {
+                  error("Application failed health check after ${maxRetries} attempts")
+              }
+          }
       }
     }
 
