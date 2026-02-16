@@ -76,18 +76,20 @@ pipeline {
 
     stage('Deploy New Version') {
       steps {
-        sh '''
-	  #!/bin/bash
-          set -e 
+        sh ( 
+	  script: """
+              set -e 
 
-          docker rm -f myapp-${env.NEW_COLOR} || true
+              docker rm -f myapp-${env.NEW_COLOR} || true
 
-          docker run -d \
-            --name myapp-${env.NEW_COLOR} \
-            --network app-net \
-            -p ${env.NEW_PORT}:8080 \
-            myapp:${IMAGE_TAG}
-        '''
+              docker run -d \
+                --name myapp-${env.NEW_COLOR} \
+                --network app-net \
+                -p ${env.NEW_PORT}:8080 \
+                myapp:${IMAGE_TAG}
+          """,
+          shell: '/bin/bash'
+        )
       }
     }
 
