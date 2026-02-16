@@ -77,52 +77,47 @@ pipeline {
     stage('Deploy New Version') {
       steps {
         sh '''
-          docker rm -f ${APP_NAME}-${NEW} || true
+          docker rm -f myapp-${env.NEW_COLOR} || true
 
           docker run -d \
-            --name ${APP_NAME}-${NEW} \
-            --network ${NETWORK} \
-            -p ${PORT}:8080 \
-            ${APP_NAME}:${VERSION}
+            --name myapp-${env.NEW_COLOR} \
+            --network app-net \
+            -p ${env.NEW_PORT}:8080 \
+            myapp:${IMAGE_TAG}
         '''
       }
     }
 
-    stage('Health Check') {
-      steps {
-	  script {
-	      def maxRetries = 10
-              def delaySeconds = 3
-              def healthUrl = "http://localhost:${NEW_PORT}"
+ 
+   stage('Health Check') {
+    steps {
+        script {
+            echo "Starting health check for ${env.NEW_COLOR} on http://localhost:${env.NEW_PORT}"
 
-              echo "Starting health check for ${NEW_COLOR} on ${healthUrl}"
-              
-              def healthy = false
+            for (int i = 1; i <= 10; i++) {
+                def status = sh(
+                    script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:${env.NEW_PORT} || true",
+                    returnStdout: true
+                ).trim()
 
-              for (int i = 1; i <= maxRetries; i++) {
-                  def status = sh (
-                      script: "curl -s -o /dev/null -w \"%{http_code}\" ${healthUrl} || true",
-                      returnStdout: true
-                  ).trim()
-                  
-                  if (status == "200") {
-                      echo "Health check passed on attempt ${i}"
-                      healthy = true
-                      break
-                  } else {
-                     echo "Attempt ${i}/${maxRetries} failed (HTTP ${status}). Retrying in ${delaySeconds}s..."
-                     sleep delaySeconds
-                  }
-              } 
-              
-              if (!healthy) {
-                  error("Application failed health check after ${maxRetries} attempts")
-              }
-          }
-      }
+                if (status == "200") {
+                    echo "Application is healthy ✅"
+                    return
+                }
+
+                echo "Attempt ${i}/10 failed (HTTP ${status}). Retrying in 3s..."
+                sleep 3
+            }
+
+            error "Application failed health check after 10 attempts"
+        }
     }
+}
 
-    stage('Switch Traffic') {
+
+
+
+   stage('Switch Traffic') {
       steps {
         script {
           def workspaceDir = pwd()
