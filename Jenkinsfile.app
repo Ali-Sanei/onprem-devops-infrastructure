@@ -74,24 +74,26 @@ pipeline {
       }
     }
 
-    stage('Deploy New Version') {
-      steps {
-        sh ( 
-	  script: """
-              set -e 
+   stage('Deploy New Version') {
+  steps {
+    sh '''
+      #!/bin/bash
+      set -euo pipefail
 
-              docker rm -f myapp-${env.NEW_COLOR} || true
+      echo "Removing old container if exists..."
+      docker rm -f myapp-${NEW_COLOR} 2>/dev/null || true
 
-              docker run -d \
-                --name myapp-${env.NEW_COLOR} \
-                --network app-net \
-                -p ${env.NEW_PORT}:8080 \
-                myapp:${IMAGE_TAG}
-          """,
-          shell: '/bin/bash'
-        )
-      }
-    }
+      echo "Starting new container..."
+      docker run -d \
+        --name myapp-${NEW_COLOR} \
+        --network app-net \
+        -p ${NEW_PORT}:8080 \
+        myapp:${IMAGE_TAG}
+
+      echo "Container myapp-${NEW_COLOR} started on port ${NEW_PORT}"
+    '''
+  }
+}
 
  
    stage('Health Check') {
