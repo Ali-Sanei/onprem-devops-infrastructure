@@ -8,19 +8,18 @@ pipeline {
   }
 
   environment {
-    APP_NAME = "myapp"
-    VERSION  = readFile('app/version.txt').trim()
-    NETWORK  = "app-net"
-    BLUE     = "myapp-blue"
-    GREEN    = "myapp-green"
-    BLUE_PORT  = "8081"
-    GREEN_PORT = "8082"
+    APP_NAME    = "myapp"
+    VERSION     = readFile('app/version.txt').trim()
+    NETWORK     = "app-net"
+    BLUE        = "myapp-blue"
+    GREEN       = "myapp-green"
+    BLUE_PORT   = "8081"
+    GREEN_PORT  = "8082"
   }
 
   stages {
 
-
-    stage( 'Ensure nginx via Ansible' ) {
+    stage('Ensure nginx via Ansible') {
       steps {
         sh '''
            cd ansible
@@ -42,18 +41,18 @@ pipeline {
       steps {
         script {
           def active = sh(
-            script: "docker ps --format '{{.Names}}' | grep -E 'myapp-blue|green' || true",
+            script: "docker ps --format '{{.Names}}' | grep -E 'myapp-blue|myapp-green' || true",
             returnStdout: true
           ).trim()
 
           if (active.contains("blue")) {
             env.ACTIVE_COLOR = "blue"
-            env.NEW_COLOR = "green"
-            env.NEW_PORT = "8082"
+            env.NEW_COLOR    = "green"
+            env.NEW_PORT     = "${GREEN_PORT}"
           } else {
             env.ACTIVE_COLOR = "green"
-            env.NEW_COLOR = "blue"
-            env.NEW_PORT = "8081"
+            env.NEW_COLOR    = "blue"
+            env.NEW_PORT     = "${BLUE_PORT}"
           }
 
           echo "Active: ${env.ACTIVE_COLOR}"
@@ -74,57 +73,50 @@ pipeline {
       }
     }
 
-   stage('Deploy New Version') {
-  steps {
-    sh '''
-      #!/bin/bash
-      set -euo pipefail
+    stage('Deploy New Version') {
+      steps {
+        sh '''#!/bin/bash
+          set -e
 
-      echo "Removing old container if exists..."
-      docker rm -f myapp-${NEW_COLOR} 2>/dev/null || true
+          echo "Removing old container if exists..."
+          docker rm -f ${APP_NAME}-${NEW_COLOR} 2>/dev/null || true
 
-      echo "Starting new container..."
-      docker run -d \
-        --name myapp-${NEW_COLOR} \
-        --network app-net \
-        -p ${NEW_PORT}:8080 \
-        myapp:${IMAGE_TAG}
+          echo "Starting new container..."
+          docker run -d \
+            --name ${APP_NAME}-${NEW_COLOR} \
+            --network ${NETWORK} \
+            -p ${NEW_PORT}:8080 \
+            ${APP_NAME}:${VERSION}
 
-      echo "Container myapp-${NEW_COLOR} started on port ${NEW_PORT}"
-    '''
-  }
-}
-
- 
-   stage('Health Check') {
-    steps {
-        script {
-            echo "Starting health check for ${env.NEW_COLOR} on http://localhost:${env.NEW_PORT}"
-
-            for (int i = 1; i <= 10; i++) {
-                def status = sh(
-                    script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:${env.NEW_PORT} || true",
-                    returnStdout: true
-                ).trim()
-
-                if (status == "200") {
-                    echo "Application is healthy ✅"
-                    return
-                }
-
-                echo "Attempt ${i}/10 failed (HTTP ${status}). Retrying in 3s..."
-                sleep 3
-            }
-
-            error "Application failed health check after 10 attempts"
-        }
+          echo "Container ${APP_NAME}-${NEW_COLOR} started on port ${NEW_PORT}"
+        '''
+      }
     }
-}
 
+    stage('Health Check') {
+      steps {
+        script {
+          echo "Starting health check for ${NEW_COLOR} on http://localhost:${NEW_PORT}"
 
+          for (int i = 1; i <= 10; i++) {
+            def status = sh(
+              script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:${NEW_PORT} || true",
+              returnStdout: true
+            ).trim()
+            if (status == "200") {
+              echo "Application is healthy ✅"
+              return
+            }
+            echo "Attempt ${i}/10 failed (HTTP ${status}). Retrying in 3s..."
+            sleep 3
+          }
 
+          error "Application failed health check after 10 attempts"
+        }
+      }
+    }
 
-   stage('Switch Traffic') {
+    stage('Switch Traffic') {
       steps {
         script {
           def workspaceDir = pwd()
@@ -132,7 +124,7 @@ pipeline {
           sh """
             mkdir -p "${workspaceDir}/nginx/conf.d"
 
-            sed "s/{{ACTIVE_COLOR}}/${APP_NAME}-${NEW}/" \
+            sed "s/{{ACTIVE_COLOR}}/${NEW_COLOR}/" \
               "${workspaceDir}/nginx/template/upstream.conf.tpl" \
               > "${workspaceDir}/nginx/conf.d/upstream.conf"
 
@@ -145,7 +137,7 @@ pipeline {
     stage('Cleanup Old Version') {
       steps {
         sh '''
-          docker rm -f ${APP_NAME}-${ACTIVE} || true
+          docker rm -f ${APP_NAME}-${ACTIVE_COLOR} || true
         '''
       }
     }
@@ -156,10 +148,9 @@ pipeline {
     failure {
       sh '''
         echo "Deployment failed. Rolling back..."
-        docker rm -f ${APP_NAME}-${NEW} || true
+        docker rm -f ${APP_NAME}-${NEW_COLOR} || true
       '''
     }
-
     success {
       echo "Deployment successful 🚀"
     }
