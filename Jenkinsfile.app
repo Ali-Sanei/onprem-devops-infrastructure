@@ -77,6 +77,9 @@ pipeline {
     stage('Deploy New Version') {
       steps {
         sh '''
+	  #!/bin/bash
+          set -e 
+
           docker rm -f myapp-${env.NEW_COLOR} || true
 
           docker run -d \
