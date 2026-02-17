@@ -119,6 +119,205 @@ In Day 10, a Blue/Green deployment strategy was implemented to achieve zero-down
 - Safer releases with instant rollback capability
 - Production-like deployment strategy implemented on-prem
 
+# 🚀 Production-Grade Blue/Green Deployment with Jenkins, Docker & Ansible
+
+## 📌 Project Overview
+
+This project demonstrates a **production-ready Blue/Green deployment strategy** using:
+
+- Jenkins (CI/CD Pipeline)
+- Docker
+- Ansible
+- Nginx (Reverse Proxy)
+- Custom Health Checks
+- Zero-downtime deployment logic
+
+The system ensures:
+
+- ✅ Zero downtime
+- ✅ Safe automatic rollback
+- ✅ Fully automated deployment
+- ✅ Infrastructure provisioning via code
+
+---
+
+# 🏗 Architecture
+
+Developer
+↓
+GitHub
+↓
+Jenkins Pipeline (app-server agent)
+↓
+Ansible (Infra provisioning)
+↓
+Docker Network (app-net)
+↓
+Nginx Container (Reverse Proxy)
+↓
+myapp-blue | myapp-green
+
+
+---
+
+## 🧩 Components
+
+| Component | Purpose |
+|-----------|----------|
+| Jenkins | CI/CD Orchestration |
+| Ansible | Infrastructure provisioning |
+| Docker | Container runtime |
+| Nginx | Reverse proxy & traffic switching |
+| Blue/Green Containers | Zero-downtime deployments |
+
+---
+
+# 🔵🟢 Blue/Green Deployment Flow
+
+1. Detect currently active color (blue/green)
+2. Build new Docker image
+3. Deploy new container on alternate port
+4. Run health checks
+5. Switch Nginx upstream to new version
+6. Remove old container
+7. Rollback automatically on failure
+
+---
+
+# 📂 Project Structure
+
+ansible/
+roles/
+docker/
+nginx/
+
+app/
+Dockerfile
+app.sh
+health.sh
+version.txt
+
+nginx/
+template/
+upstream.conf.tpl
+
+
+---
+
+# ⚙️ CI/CD Pipeline Stages
+
+1. Ensure Infrastructure (Ansible)
+2. Ensure Docker Network
+3. Detect Active Color
+4. Build Image
+5. Deploy New Version
+6. Health Check
+7. Switch Traffic
+8. Cleanup Old Version
+9. Rollback on Failure
+
+---
+
+# 🧪 Health Check Strategy
+
+The pipeline waits until the new container returns **HTTP 200** before switching traffic.
+
+- Retries: 10
+- Delay: 3 seconds
+
+If health check fails → deployment aborts automatically.
+
+---
+
+# 🔁 Automatic Rollback
+
+If any stage fails:
+
+- The newly deployed container is removed
+- Traffic remains on previous stable version
+- Deployment marked as failed in Jenkins
+
+This ensures zero-risk deployment.
+
+---
+
+# ⚠️ Challenges & Solutions
+
+| Issue | Solution |
+|-------|----------|
+| Docker daemon not ready | Added wait loop in Ansible |
+| Jenkins shell incompatibility | Avoided `pipefail`, used compatible shell |
+| Bad substitution error | Fixed environment variable usage |
+| Nginx reload issues | Correct upstream template handling |
+| Rollback variable mismatch | Standardized variable naming |
+
+---
+
+# 📦 Docker Network
+
+All containers run inside a dedicated network:
+
+
+This allows:
+
+- Clean internal communication
+- Isolation from host
+- Proper service discovery
+
+---
+
+# 🚀 How To Run
+
+1. Push changes to GitHub
+2. Trigger Jenkins pipeline
+3. Pipeline automatically:
+   - Builds Docker image
+   - Deploys new version
+   - Runs health checks
+   - Switches traffic
+   - Removes old version
+
+Access the application:
+
+
+---
+
+# 📈 Future Improvements
+
+- Add Prometheus monitoring
+- Add Grafana dashboards
+- Push images to private Docker registry
+- Add Slack/Telegram notifications
+- Implement Canary deployments
+- Add Auto-scaling support
+- Add Docker Compose or Kubernetes migration
+
+---
+
+# 🎯 What This Project Demonstrates
+
+- Production-ready CI/CD design
+- Zero-downtime deployment
+- Infrastructure as Code (IaC)
+- Automated rollback logic
+- Real-world troubleshooting of Docker & Jenkins
+
+---
+
+# 👤 Author
+
+**Ali Sanei**  
+DevOps Engineer  
+Hands-on Production Infrastructure
+
+---
+
+# 🏁 Final Note
+
+This is not just a demo project.  
+It represents a real-world Blue/Green deployment implemented on-prem with real operational challenges.
+
+
 
 
 
