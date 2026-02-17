@@ -317,6 +317,84 @@ Hands-on Production Infrastructure
 This is not just a demo project.  
 It represents a real-world Blue/Green deployment implemented on-prem with real operational challenges.
 
+## 🔁 Blue-Green Deployment Strategy
+
+This project uses a Blue-Green deployment strategy to achieve zero-downtime deployments.
+
+### How It Works
+
+1. Two environments exist:
+   - `myapp-blue`
+   - `myapp-green`
+
+2. Only one environment serves traffic at a time.
+
+3. Deployment flow:
+   - Build Docker image with Git SHA tag
+   - Deploy new version to inactive environment
+   - Run health checks
+   - Switch Nginx upstream to new version
+   - Remove old container
+
+If deployment fails, the new container is removed and traffic remains on the previous version.
+
+## 🧪 Health Check
+
+After deploying the new version, Jenkins performs:
+
+- 10 health check attempts
+- 3 seconds interval
+- HTTP 200 validation
+
+If health check fails:
+- Deployment is marked as failed
+- New container is removed
+- Traffic is not switched
+
+## 🏷 Docker Image Versioning
+
+Each build is tagged with:
+
+- Git short SHA
+- latest tag
+
+Example:
+
+myapp:a91d23f
+myapp:latest
+
+This ensures traceability between Git commits and running containers.
+
+## 🧱 Infrastructure Provisioning
+
+Infrastructure setup is automated using Ansible.
+
+It ensures:
+
+- Docker is installed and running
+- Docker network exists
+- Nginx container is running
+- Upstream config is managed
+
+## 🔐 Safety Mechanisms
+
+- Health check validation before traffic switch
+- Automatic rollback on failure
+- Concurrent build prevention
+- Timestamped logs
+
+## 📈 CI/CD Pipeline Flow
+
+1. Checkout source code
+2. Ensure infrastructure
+3. Detect active environment
+4. Build Docker image
+5. Deploy new version
+6. Health check
+7. Switch traffic
+8. Cleanup old version
+
+
 
 
 
