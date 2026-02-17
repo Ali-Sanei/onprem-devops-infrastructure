@@ -64,12 +64,16 @@ pipeline {
 
     stage('Build Image') {
       steps {
-        sh '''
-          docker build \
-            -t ${APP_NAME}:${VERSION} \
-            -t ${APP_NAME}:latest \
-            app/
-        '''
+	script {
+	  env.GIT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+         
+	  sh '''
+            docker build \
+              -t ${APP_NAME}:${GIT_SHA} \
+              -t ${APP_NAME}:latest \
+              app/
+          '''
+	}
       }
     }
 
@@ -86,7 +90,7 @@ pipeline {
             --name ${APP_NAME}-${NEW_COLOR} \
             --network ${NETWORK} \
             -p ${NEW_PORT}:8080 \
-            ${APP_NAME}:${VERSION}
+            ${APP_NAME}:${GIT_SHA}
 
           echo "Container ${APP_NAME}-${NEW_COLOR} started on port ${NEW_PORT}"
         '''
@@ -101,8 +105,7 @@ pipeline {
           for (int i = 1; i <= 10; i++) {
             def status = sh(
               script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:${NEW_PORT} || true",
-              returnStdout: true
-            ).trim()
+              returnStdout: true).trim()
             if (status == "200") {
               echo "Application is healthy ✅"
               return
@@ -153,6 +156,7 @@ pipeline {
     }
     success {
       echo "Deployment successful 🚀"
+      echo "Tagged Docker image with SHA: ${GIT_SHA}"
     }
   }
 }
