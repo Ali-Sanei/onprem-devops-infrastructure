@@ -100,6 +100,8 @@ pipeline {
       steps {
         sh '''#!/bin/bash
           set -e
+	  
+          echo "Pulling image: ${DOCKER_IMAGE}:${GIT_SHA}"
           docker pull ${DCOKER_IMAGE}:${GIT_SHA}
           
           echo "Removing old container if exists..."
@@ -107,9 +109,9 @@ pipeline {
 
           echo "Starting new container..."
           docker run -d \
-            --name ${APP_NAME}-${NEW_COLOR} \
+            --name myapp-${env.NEW_COLOR} \
             --network ${NETWORK} \
-            -p ${NEW_PORT}:8080 \
+            -p ${env.NEW_PORT}:8080 \
             ${DOCKER_IMAGE}:${GIT_SHA}
 
           echo "Container ${APP_NAME}-${NEW_COLOR} started on port ${NEW_PORT}"
