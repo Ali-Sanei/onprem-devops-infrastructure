@@ -111,7 +111,7 @@ pipeline {
           docker run -d \
             --name ${APP_NAME}-${NEW_COLOR} \
             --network ${NETWORK} \
-            -p ${env.NEW_PORT}:8080 \
+            -p ${NEW_PORT}:8080 \
             ${DOCKER_IMAGE}:${GIT_SHA}
 
           echo "Container ${APP_NAME}-${NEW_COLOR} started on port ${NEW_PORT}"
