@@ -394,6 +394,123 @@ It ensures:
 7. Switch traffic
 8. Cleanup old version
 
+# Blue-Green Deployment with Jenkins & Docker
+
+## Overview
+This project demonstrates a **Blue-Green deployment** for a simple application using:
+
+- **Jenkins** (pipeline automation)  
+- **Docker** (containerization)  
+- **Ansible** (infrastructure & Nginx setup)  
+
+The pipeline builds a Docker image, deploys it to a new environment (Blue or Green), performs health checks, switches traffic via Nginx, and cleans up the old version.
+
+---
+
+## Features
+
+- **Blue-Green Deployment**: Zero-downtime deployment with traffic switching  
+- **Health Checks**: Ensures the new version is running before switching  
+- **Automated Cleanup**: Old containers are removed after successful deployment  
+- **Versioned Docker Images**: Tagged with Git SHA and `latest`  
+- **Idempotent Pipeline**: Safe to run multiple times  
+
+---
+
+## Prerequisites
+
+- Jenkins with an agent labeled `app-server-agent`  
+- Docker installed on the deployment server  
+- Ansible installed for infrastructure setup  
+- Nginx configured via Ansible to proxy app traffic  
+
+---
+
+## Project Structure
+
+├── app/
+│ ├── app.sh
+│ ├── health.sh
+│ └── version.txt
+├── ansible/
+│ └── playbooks/infra.yml
+├── jenkins/
+│ └── Jenkinsfile
+├── nginx/
+│ └── template/upstream.conf.tpl
+└── README.md
+
+
+---
+
+## Jenkins Pipeline Stages
+
+1. **Ensure nginx via Ansible** – prepares Docker, Nginx, and network  
+2. **Ensure Docker Network** – creates `app-net` if not existing  
+3. **Detect Active Color** – finds active environment (Blue or Green)  
+4. **Build Image** – builds Docker image with Git SHA and latest tags  
+5. **Deploy New Version** – runs new container on the unused color  
+6. **Health Check** – verifies the new container responds with HTTP 200  
+7. **Switch Traffic** – updates Nginx configuration to point to the new container  
+8. **Cleanup Old Version** – removes the previous container  
+9. **Post Actions** – rollback on failure, success message on completion  
+
+---
+
+## Environment Variables
+
+| Variable      | Description                                      |
+|---------------|--------------------------------------------------|
+| APP_NAME      | Application name (`myapp`)                       |
+| VERSION       | Version from `app/version.txt`                   |
+| NETWORK       | Docker network (`app-net`)                        |
+| BLUE / GREEN  | Container names for Blue/Green deployment        |
+| BLUE_PORT     | Port for Blue environment (`8081`)              |
+| GREEN_PORT    | Port for Green environment (`8082`)             |
+| ACTIVE_COLOR  | Currently active deployment color               |
+| NEW_COLOR     | Color to deploy next                             |
+| NEW_PORT      | Port for the new deployment                      |
+| GIT_SHA       | Git SHA used to tag Docker images                |
+
+---
+
+## Usage
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/onprem-devops-infrastructure.git
+cd onprem-devops-infrastructure
+Open Jenkins, create a new pipeline pointing to the Jenkinsfile.
+
+Run the pipeline. It will:
+
+Build the Docker image
+
+Deploy to the inactive environment (Blue or Green)
+
+Perform health check
+
+Switch traffic via Nginx
+
+Clean up the old container
+
+Rollback
+
+If any stage fails, the pipeline automatically removes the newly deployed container.
+
+The previous active version continues serving traffic.
+
+Future Improvements
+
+Slack Notifications for deployment status
+
+Multi-Environment Deploy (Dev → Staging → Production)
+
+Monitoring & Logging for containers
+
+License
+
+MIT License © Ali Sanei
 
 
 
