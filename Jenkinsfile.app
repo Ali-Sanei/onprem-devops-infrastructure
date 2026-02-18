@@ -102,14 +102,14 @@ pipeline {
           set -e
 	  
           echo "Pulling image: ${DOCKER_IMAGE}:${GIT_SHA}"
-          docker pull ${DCOKER_IMAGE}:${GIT_SHA}
+          docker pull ${DOCKER_IMAGE}:${GIT_SHA}
           
           echo "Removing old container if exists..."
           docker rm -f ${APP_NAME}-${NEW_COLOR} 2>/dev/null || true
 
           echo "Starting new container..."
           docker run -d \
-            --name myapp-${env.NEW_COLOR} \
+            --name ${APP_NAME}-${NEW_COLOR} \
             --network ${NETWORK} \
             -p ${env.NEW_PORT}:8080 \
             ${DOCKER_IMAGE}:${GIT_SHA}
