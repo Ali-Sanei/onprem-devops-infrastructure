@@ -15,6 +15,7 @@ pipeline {
     GREEN       = "myapp-green"
     BLUE_PORT   = "8081"
     GREEN_PORT  = "8082"
+    DOCKER_IMAGE = "allliiisaaannneiii/myapp"
   }
 
   stages {
@@ -76,12 +77,31 @@ pipeline {
 	}
       }
     }
+    
+    stage ('Push to Docker Hub') {
+      steps {
+	withCredentials([usernamePassword(
+          credentialsId: 'dockerhub-creds',
+          usernameVariable: 'DOCKER_USER',
+          passwordVariable: 'DOCKER_PASS'
+        )]) {
+	  sh '''
+	    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin 
+	    docker tag ${APP_NAME}:${GIT_SHA} ${DOCKER_IMAGE}:${GIT_SHA}
+            docker tag ${APP_NAME}:${GIT_SHA} ${DOCKER_IMAGE}:latest
 
+            docker push ${DOCKER_IMAGE}:${GIT_SHA}
+            docker push ${DOCKER_IMAGE}:latest
+          '''
+        }
+      }
+    }
     stage('Deploy New Version') {
       steps {
         sh '''#!/bin/bash
           set -e
-
+          docker pull ${DCOKER_IMAGE}:${GIT_SHA}
+          
           echo "Removing old container if exists..."
           docker rm -f ${APP_NAME}-${NEW_COLOR} 2>/dev/null || true
 
@@ -90,7 +110,7 @@ pipeline {
             --name ${APP_NAME}-${NEW_COLOR} \
             --network ${NETWORK} \
             -p ${NEW_PORT}:8080 \
-            ${APP_NAME}:${GIT_SHA}
+            ${DOCKER_IMAGE}:${GIT_SHA}
 
           echo "Container ${APP_NAME}-${NEW_COLOR} started on port ${NEW_PORT}"
         '''
