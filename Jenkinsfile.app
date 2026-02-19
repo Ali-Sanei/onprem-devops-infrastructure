@@ -170,42 +170,33 @@ pipeline {
   }
 
 
+
   post {
   success {
-    slackSend(
-      channel: "#deployments",
-      color: "good",
-      tokenCredentialId: "slack-token",
-      message: """
-      ✅ Deployment Successful
-      Job: ${env.JOB_NAME}
-      Build: #${env.BUILD_NUMBER}
-      Active Color: ${env.NEW_COLOR}
-      Git SHA: ${env.GIT_SHA}
-      ${env.BUILD_URL}
-      """
-    )
-  }
-
-    failure {
-      slackSend(
-        channel: "#deployments",
-        color: "danger",
-        tokenCredentialId: "slack-token",
-        message: """
-        ❌ Deployment Failed
-        Job: ${env.JOB_NAME}
-        Build: #${env.BUILD_NUMBER}
-        ${env.BUILD_URL}
+    script {
+      withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+        sh """
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{
+            "text": "✅ Deployment Successful\\nProject: ${env.JOB_NAME}\\nBuild: #${env.BUILD_NUMBER}\\nGit SHA: ${env.GIT_SHA}"
+          }' $SLACK_URL
         """
-      )
-
-      sh '''
-        echo "Rolling back..."
-        docker rm -f ${APP_NAME}-${NEW_COLOR} || true
-      '''
+      }
     }
   }
 
+  failure {
+    script {
+      withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+        sh """
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{
+            "text": "❌ Deployment Failed\\nProject: ${env.JOB_NAME}\\nBuild: #${env.BUILD_NUMBER}"
+          }' $SLACK_URL
+        """
+      }
+    }
+  }
+}
 }
 
