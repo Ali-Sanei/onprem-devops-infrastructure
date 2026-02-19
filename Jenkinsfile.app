@@ -170,16 +170,41 @@ pipeline {
   }
 
   post {
-    failure {
-      sh '''
-        echo "Deployment failed. Rolling back..."
-        docker rm -f ${APP_NAME}-${NEW_COLOR} || true
-      '''
+  success {
+    script {
+      slackSend(
+        webhookUrl: credentials('slack-webhook'),
+        color: '#2eb886',
+        message: """
+        ✅ *Deployment Successful*
+        *Project:* ${env.JOB_NAME}
+        *Build:* #${env.BUILD_NUMBER}
+        *Active Color:* ${env.NEW_COLOR}
+        *Git SHA:* ${env.GIT_SHA}
+        <${env.BUILD_URL}|Open Build>
+        """
+      )
     }
-    success {
-      echo "Deployment successful 🚀"
-      echo "Tagged Docker image with SHA: ${GIT_SHA}"
+  }
+
+  failure {
+    script {
+      slackSend(
+        webhookUrl: credentials('slack-webhook'),
+        color: '#e01e5a',
+        message: """
+        ❌ *Deployment Failed*
+        *Project:* ${env.JOB_NAME}
+        *Build:* #${env.BUILD_NUMBER}
+        <${env.BUILD_URL}|Open Build>
+        """
+      )
     }
+
+    sh '''
+      echo "Rolling back..."
+      docker rm -f ${APP_NAME}-${NEW_COLOR} || true
+    '''
   }
 }
 
