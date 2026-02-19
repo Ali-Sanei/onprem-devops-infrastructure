@@ -169,7 +169,7 @@ pipeline {
 
   }
 
-  post {
+post {
   success {
     script {
       slackSend(
