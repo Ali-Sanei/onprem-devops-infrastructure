@@ -169,42 +169,43 @@ pipeline {
 
   }
 
-post {
-  success {
-    script {
-      slackSend(
-        webhookUrl: credentials('slack-webhook'),
-        color: '#2eb886',
-        message: """
-        ✅ *Deployment Successful*
-        *Project:* ${env.JOB_NAME}
-        *Build:* #${env.BUILD_NUMBER}
-        *Active Color:* ${env.NEW_COLOR}
-        *Git SHA:* ${env.GIT_SHA}
-        <${env.BUILD_URL}|Open Build>
-        """
-      )
-    }
-  }
-
-  failure {
-    script {
-      slackSend(
-        webhookUrl: credentials('slack-webhook'),
-        color: '#e01e5a',
-        message: """
-        ❌ *Deployment Failed*
-        *Project:* ${env.JOB_NAME}
-        *Build:* #${env.BUILD_NUMBER}
-        <${env.BUILD_URL}|Open Build>
-        """
-      )
+  post {
+    success {
+      script {
+        slackSend(
+          webhookUrl: credentials('slack-webhook'),
+          color: '#2eb886',
+          message: """
+          ✅ *Deployment Successful*
+          *Project:* ${env.JOB_NAME}
+          *Build:* #${env.BUILD_NUMBER}
+          *Active Color:* ${env.NEW_COLOR}
+          *Git SHA:* ${env.GIT_SHA}
+          <${env.BUILD_URL}|Open Build>
+          """
+        )
+      } 
     }
 
-    sh '''
-      echo "Rolling back..."
-      docker rm -f ${APP_NAME}-${NEW_COLOR} || true
-    '''
+    failure {
+      script {
+        slackSend(
+          webhookUrl: credentials('slack-webhook'),
+          color: '#e01e5a',
+          message: """
+          ❌ *Deployment Failed*
+          *Project:* ${env.JOB_NAME}
+          *Build:* #${env.BUILD_NUMBER}
+          <${env.BUILD_URL}|Open Build>
+          """
+        )
+      }
+
+      sh '''
+        echo "Rolling back..."
+        docker rm -f ${APP_NAME}-${NEW_COLOR} || true
+      '''
+    }
   }
 }
 
