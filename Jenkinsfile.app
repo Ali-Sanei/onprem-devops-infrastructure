@@ -217,7 +217,7 @@ pipeline {
 
 
 echo "Removing old container if exists..."
-          docker rm -f ${APP_NAME}-${NEW_COLOR} 2>/dev/null  true
+          docker rm -f ${APP_NAME}-${NEW_COLOR} 2>/dev/null || true
 
           echo "Starting new container..."
           docker run -d \
