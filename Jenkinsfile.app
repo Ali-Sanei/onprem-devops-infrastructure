@@ -99,14 +99,34 @@ pipeline {
         }
       }
     }
+    
     stage('Deploy New Version') {
+      when {
+        anyOf {
+          branch 'develop'
+          branch 'main'
+        }
+      }
+
       steps {
+
+        script {
+      
+          if (env.BRANCH_NAME == 'develop') {
+            env.NEW_PORT = "8082"
+          } else {
+            env.NEW_PORT = "8081"
+          }
+
+          echo "Deploying on port ${env.NEW_PORT}"
+        }
+
         sh '''#!/bin/bash
           set -e
-	  
+
           echo "Pulling image: ${DOCKER_IMAGE}:${GIT_SHA}"
           docker pull ${DOCKER_IMAGE}:${GIT_SHA}
-          
+
           echo "Removing old container if exists..."
           docker rm -f ${APP_NAME}-${NEW_COLOR} 2>/dev/null || true
 
@@ -124,7 +144,6 @@ pipeline {
         '''
       }
     }
-
     stage('Health Check') {
       steps {
         script {
@@ -156,6 +175,17 @@ pipeline {
       }
     }
 
+    stage('Production Approve') {
+      when {
+        branch 'main'
+      }
+      steps {
+        timeout(time: 2, unit: 'MINUTES') {
+          input message: "Deploy to PRODUCTION?", ok: "Deploy"
+        }
+      }
+
+    }
     stage('Switch Traffic') {
       steps {
         script {
