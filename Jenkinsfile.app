@@ -244,6 +244,7 @@ EOF
     "text": "❌ Deployment Failed\nProject: $JOB_NAME\nBuild: #$BUILD_NUMBER"
   }
 EOF
+          curl -v https://hooks.slack.com || true
 
           curl -s -o /dev/null -X POST \
             -H "Content-type: application/json" \
