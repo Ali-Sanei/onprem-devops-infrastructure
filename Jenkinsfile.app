@@ -5,6 +5,7 @@ pipeline {
   options {
     timestamps()
     disableConcurrentBuilds()
+    timeout(time: 15, unit: 'MINUTES')
   }
 
   environment {
@@ -65,16 +66,18 @@ pipeline {
 
     stage('Build Image') {
       steps {
-	script {
-	  env.GIT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+        retry(3){
+	  script {
+	    env.GIT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
          
-	  sh '''
-            docker build \
-              -t ${APP_NAME}:${GIT_SHA} \
-              -t ${APP_NAME}:latest \
-              app/
-          '''
-	}
+	    sh '''
+              docker build \
+                -t ${APP_NAME}:${GIT_SHA} \
+                -t ${APP_NAME}:latest \
+                app/
+            '''
+	  }
+        }
       }
     }
     
@@ -112,6 +115,9 @@ pipeline {
             --name ${APP_NAME}-${NEW_COLOR} \
             --network ${NETWORK} \
             -p ${NEW_PORT}:8080 \
+            --memory="128m" \
+            --cpus="0.5" \
+            --restart=always \
             ${DOCKER_IMAGE}:${GIT_SHA}
 
           echo "Container ${APP_NAME}-${NEW_COLOR} started on port ${NEW_PORT}"
