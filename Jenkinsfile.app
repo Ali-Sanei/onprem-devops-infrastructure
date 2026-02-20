@@ -190,25 +190,30 @@ pipeline {
   success {
     script {
       withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
-        sh """
-          curl -X POST -H 'Content-type: application/json' \
-          --data '{
-            "text": "✅ Deployment Successful\\nProject: ${env.JOB_NAME}\\nBuild: #${env.BUILD_NUMBER}\\nGit SHA: ${env.GIT_SHA}"
-          }' $SLACK_URL
-        """
+        sh '''
+          payload=$(cat <<EOF
+{
+  "text": "✅ Deployment Successful\nProject: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}"
+}
+EOF
+)
+          curl -X POST -H "Content-type: application/json" \
+          --data "$payload" \
+          "$SLACK_URL"
+        '''
       }
     }
   }
 
-  failure {
+
+   failure {
     script {
       withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
-        sh """
-          curl -X POST -H 'Content-type: application/json' \
-          --data '{
-            "text": "❌ Deployment Failed\\nProject: ${env.JOB_NAME}\\nBuild: #${env.BUILD_NUMBER}"
-          }' $SLACK_URL
-        """
+        sh '''
+          curl -X POST -H "Content-type: application/json" \
+          --data "{\"text\":\"❌ Deployment Failed\nProject: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}\"}" \
+          "$SLACK_URL"
+        '''
       }
     }
   }
