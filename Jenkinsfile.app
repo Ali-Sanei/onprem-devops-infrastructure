@@ -216,7 +216,6 @@ pipeline {
 
 
 
-  Ali sanei, [2/20/26 9:11 PM]
 echo "Removing old container if exists..."
           docker rm -f ${APP_NAME}-${NEW_COLOR} 2>/dev/null  true
 
