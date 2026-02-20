@@ -241,7 +241,7 @@ EOF
       withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
         sh '''
           curl -s -o /dev/null -X POST -H "Content-type: application/json" \
-          --data '{"text":"❌ Deployment Failed\nProject: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}"}' \
+          --data "{\"text\":\"❌ Deployment Failed\\nProject: ${JOB_NAME}\\nBuild: #$BUILD_NUMBER\"}" \
           "$SLACK_URL" || true
         '''
       }
