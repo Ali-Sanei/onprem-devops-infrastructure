@@ -120,34 +120,33 @@ pipeline {
     }
 
     stage('Health Check') {
-  script {
-    echo "Starting health check for ${NEW_COLOR} on http://localhost:${NEW_PORT}"
+      script {
+        echo "Starting health check for ${NEW_COLOR} on http://localhost:${NEW_PORT}"
 
-    def status = sh(
-      script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:${NEW_PORT}",
-      returnStdout: true
-    ).trim()
+        def status = sh(
+          script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:${NEW_PORT}",
+           returnStdout: true).trim()
 
-    if (status == "200") {
-      echo "Application is healthy ✅"
-    } else {
-      echo "Health check failed ❌"
-      echo "Starting rollback..."
+        if (status == "200") {
+          echo "Application is healthy ✅"
+        } else {
+          echo "Health check failed ❌"
+          echo "Starting rollback..."
 
-      sh "docker rm -f myapp-${NEW_COLOR}"
+          sh "docker rm -f myapp-${NEW_COLOR}"
 
-      withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
-        sh '''
-        curl -X POST -H "Content-type: application/json" \
-        --data "{\"text\":\"🔁 Deployment Failed - Rolled Back\nProject: $JOB_NAME\nBuild: #$BUILD_NUMBER\"}" \
-        "$SLACK_URL"
-        '''
+          withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+            sh '''
+             curl -X POST -H "Content-type: application/json" \
+             --data "{\"text\":\"🔁 Deployment Failed - Rolled Back\nProject: $JOB_NAME\nBuild: #$BUILD_NUMBER\"}" \
+             "$SLACK_URL"
+             '''
+          }
+
+          error("Deployment failed. Rolled back to ${ACTIVE_COLOR}")
+        }
       }
-
-      error("Deployment failed. Rolled back to ${ACTIVE_COLOR}")
     }
-  }
-}
 
     stage('Switch Traffic') {
       steps {
