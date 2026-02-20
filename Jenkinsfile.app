@@ -235,18 +235,24 @@ EOF
     }
   }
 
-
   failure {
     script {
       withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
         sh '''
-          curl -s -o /dev/null -X POST -H "Content-type: application/json" \
-          --data "{\"text\":\"❌ Deployment Failed\\nProject: ${JOB_NAME}\\nBuild: #$BUILD_NUMBER\"}" \
-          "$SLACK_URL" || true
+          cat > slack.json <<EOF
+  {
+    "text": "❌ Deployment Failed\nProject: $JOB_NAME\nBuild: #$BUILD_NUMBER"
+  }
+EOF
+
+          curl -s -o /dev/null -X POST \
+            -H "Content-type: application/json" \
+            --data @slack.json \
+            "$SLACK_URL" || true
         '''
       }
     }
-  } 
+  }
 }
 }
 
