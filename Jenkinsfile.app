@@ -10,7 +10,6 @@ pipeline {
 
   environment {
     APP_NAME    = "myapp"
-    VERSION     = readFile('app/version.txt').trim()
     NETWORK     = "app-net"
     BLUE        = "myapp-blue"
     GREEN       = "myapp-green"
@@ -20,6 +19,15 @@ pipeline {
   }
 
   stages {
+    
+    stage('Load Version') {
+      steps {
+        script {
+          env.VERSION = readFile('app/version.txt').trim()
+          echo "App Version: ${env.VERSION}"
+        }
+      }
+    }
 
     stage('Ensure nginx via Ansible') {
       steps {
@@ -33,7 +41,7 @@ pipeline {
     stage('Ensure Docker Network') {
       steps {
         sh '''
-          docker network inspect ${NETWORK} >/dev/null 2>&1  \
+          docker network inspect ${NETWORK} >/dev/null 2>&1 || \
           docker network create ${NETWORK}
         '''
       }
@@ -43,7 +51,7 @@ pipeline {
       steps {
         script {
           def active = sh(
-            script: "docker ps --format '{{.Names}}' | grep -E 'myapp-blue|myapp-green'  true",
+            script: "docker ps --format '{{.Names}}' | grep -E 'myapp-blue|myapp-green' || true",
             returnStdout: true
           ).trim()
 
@@ -148,25 +156,32 @@ pipeline {
         script {
           echo "Starting health check for ${NEW_COLOR} on http://localhost:${NEW_PORT}"
 
-          def status = sh(
-            script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:${NEW_PORT}",
-             returnStdout: true).trim()
+          sleep 5
+          retry(5) {
+            def status = sh(
+              script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:${NEW_PORT}",
+              returnStdout: true
+            ).trim()
+          
 
-          if (status == "200") {
-            echo "Application is healthy ✅"
-          } else {
-            echo "Health check failed ❌"
-            echo "Starting rollback..."
+            if (status == "200") {
+              
+            } else {
+              echo "Health check failed ❌"
+              echo "Starting rollback..."
 
-            sh "docker rm -f myapp-${NEW_COLOR}"
+              sh "docker rm -f myapp-${NEW_COLOR}"
 
-            withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
-              sh '''
-               curl -X POST -H "Content-type: application/json" \
-               --data "{\"text\":\"🔁 Deployment Failed - Rolled Back\nProject: $JOB_NAME\nBuild: #$BUILD_NUMBER\"}" \
-               "$SLACK_URL"
-               '''
+              withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+                sh '''
+                 curl -X POST -H "Content-type: application/json" \
+                 --data "{\"text\":\"🔁 Deployment Failed - Rolled Back\nProject: $JOB_NAME\nBuild: #$BUILD_NUMBER\"}" \
+                 "$SLACK_URL"
+                 '''
+              }
             }
+           }
+            echo "Application is healthy "
 
             error("Deployment failed. Rolled back to ${ACTIVE_COLOR}")
           }
@@ -219,7 +234,7 @@ pipeline {
   success {
     script {
       withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
-        sh '''
+        sh (returnStatus: true, script: '''
           payload=$(cat <<EOF
 {
   "text": "✅ Deployment Successful\nProject: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}"
@@ -229,7 +244,7 @@ EOF
           curl -X POST -H "Content-type: application/json" \
           --data "$payload" \
           "$SLACK_URL"
-        '''
+        ''')
       }
     }
   }
