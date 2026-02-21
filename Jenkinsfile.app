@@ -9,17 +9,17 @@ pipeline {
   }
 
   environment {
-    APP_NAME    = "myapp"
-    NETWORK     = "app-net"
-    BLUE        = "myapp-blue"
-    GREEN       = "myapp-green"
-    BLUE_PORT   = "8081"
-    GREEN_PORT  = "8082"
+    APP_NAME     = "myapp"
+    NETWORK      = "app-net"
+    BLUE         = "myapp-blue"
+    GREEN        = "myapp-green"
+    BLUE_PORT    = "8081"
+    GREEN_PORT   = "8082"
     DOCKER_IMAGE = "allliiisaaannneiii/myapp"
   }
 
   stages {
-    
+
     stage('Load Version') {
       steps {
         script {
@@ -74,31 +74,34 @@ pipeline {
 
     stage('Build Image') {
       steps {
-        retry(3){
-    script {
-      env.GIT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-         
-      sh '''
+        retry(3) {
+          script {
+            env.GIT_SHA = sh(
+              script: "git rev-parse --short HEAD",
+              returnStdout: true
+            ).trim()
+
+            sh '''
               docker build \
                 -t ${APP_NAME}:${GIT_SHA} \
                 -t ${APP_NAME}:latest \
                 app/
             '''
-    }
+          }
         }
       }
     }
-    
-    stage ('Push to Docker Hub') {
+
+    stage('Push to Docker Hub') {
       steps {
-  withCredentials([usernamePassword(
+        withCredentials([usernamePassword(
           credentialsId: 'dockerhub-creds',
           usernameVariable: 'DOCKER_USER',
           passwordVariable: 'DOCKER_PASS'
         )]) {
-    sh '''
-      echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin 
-      docker tag ${APP_NAME}:${GIT_SHA} ${DOCKER_IMAGE}:${GIT_SHA}
+          sh '''
+            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+            docker tag ${APP_NAME}:${GIT_SHA} ${DOCKER_IMAGE}:${GIT_SHA}
             docker tag ${APP_NAME}:${GIT_SHA} ${DOCKER_IMAGE}:latest
 
             docker push ${DOCKER_IMAGE}:${GIT_SHA}
@@ -107,7 +110,7 @@ pipeline {
         }
       }
     }
-    
+
     stage('Deploy New Version') {
       when {
         anyOf {
@@ -117,23 +120,12 @@ pipeline {
       }
 
       steps {
-
-        script {
-      
-          if (env.BRANCH_NAME == 'develop') {
-            env.NEW_PORT = "8082"
-          } else {
-            env.NEW_PORT = "8081"
-          }
-
-          echo "Deploying on port ${env.NEW_PORT}"
-        }
-
         sh '''#!/bin/bash
           set -e
 
           echo "Pulling image: ${DOCKER_IMAGE}:${GIT_SHA}"
           docker pull ${DOCKER_IMAGE}:${GIT_SHA}
+
           echo "Removing old container if exists..."
           docker rm -f ${APP_NAME}-${NEW_COLOR} 2>/dev/null || true
 
@@ -151,40 +143,25 @@ pipeline {
         '''
       }
     }
+
     stage('Health Check') {
       steps {
         script {
           echo "Starting health check for ${NEW_COLOR} on http://localhost:${NEW_PORT}"
-
           sleep 5
+
           retry(5) {
             def status = sh(
               script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:${NEW_PORT}",
               returnStdout: true
             ).trim()
-          
 
-            if (status == "200") {
-              
-            } else {
-              echo "Health check failed ❌"
-              echo "Starting rollback..."
-
-              sh "docker rm -f myapp-${NEW_COLOR}"
-
-              withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
-                sh '''
-                 curl -X POST -H "Content-type: application/json" \
-                 --data "{\"text\":\"🔁 Deployment Failed - Rolled Back\nProject: $JOB_NAME\nBuild: #$BUILD_NUMBER\"}" \
-                 "$SLACK_URL"
-                 '''
-              }
+            if (status != "200") {
+              error("App not ready yet")
             }
-           }
-            echo "Application is healthy "
-
-            error("Deployment failed. Rolled back to ${ACTIVE_COLOR}")
           }
+
+          echo "Application is healthy ✅"
         }
       }
     }
@@ -198,19 +175,17 @@ pipeline {
           input message: "Deploy to PRODUCTION?", ok: "Deploy"
         }
       }
-
     }
+
     stage('Switch Traffic') {
       steps {
         script {
-          def workspaceDir = pwd()
-
           sh """
-            mkdir -p "${workspaceDir}/nginx/conf.d"
+            mkdir -p nginx/conf.d
 
             sed "s/{{ACTIVE_COLOR}}/${NEW_COLOR}/" \
-              "${workspaceDir}/nginx/template/upstream.conf.tpl" \
-              > "${workspaceDir}/nginx/conf.d/upstream.conf"
+              nginx/template/upstream.conf.tpl \
+              > nginx/conf.d/upstream.conf
 
             docker exec nginx nginx -s reload
           """
@@ -220,50 +195,48 @@ pipeline {
 
     stage('Cleanup Old Version') {
       steps {
-        sh '''
-          docker rm -f ${APP_NAME}-${ACTIVE_COLOR} || true
-        '''
+        sh "docker rm -f ${APP_NAME}-${ACTIVE_COLOR} || true"
       }
     }
-
   }
 
-
-
   post {
-  success {
-    script {
-      withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
-        sh (returnStatus: true, script: '''
-          payload=$(cat <<EOF
+
+    success {
+      script {
+        withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+          sh(returnStatus: true, script: '''
+            payload=$(cat <<EOF
 {
   "text": "✅ Deployment Successful\nProject: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}"
 }
 EOF
 )
-          curl -X POST -H "Content-type: application/json" \
-          --data "$payload" \
-          "$SLACK_URL"
-        ''')
+            curl -s -o /dev/null -X POST \
+              -H "Content-type: application/json" \
+              --data "$payload" \
+              "$SLACK_URL"
+          ''')
+        }
       }
     }
-  }
 
-  failure {
-    script {
-      withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
-        sh '''
-          cat > slack.json <<EOF
-  {
-    "text": "❌ Deployment Failed\nProject: $JOB_NAME\nBuild: #$BUILD_NUMBER"
-  }
+    failure {
+      script {
+        withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+          sh(returnStatus: true, script: '''
+            payload=$(cat <<EOF
+{
+  "text": "❌ Deployment Failed\nProject: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}"
+}
 EOF
-
-          curl -s -o /dev/null -X POST \
-            -H "Content-type: application/json" \
-            --data @slack.json \
-            "$SLACK_URL" || true
-        '''
+)
+            curl -s -o /dev/null -X POST \
+              -H "Content-type: application/json" \
+              --data "$payload" \
+              "$SLACK_URL"
+          ''')
+        }
       }
     }
   }
