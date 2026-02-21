@@ -127,7 +127,7 @@ pipeline {
           echo "Pulling image: ${DOCKER_IMAGE}:${GIT_SHA}"
           docker pull ${DOCKER_IMAGE}:${GIT_SHA}
           echo "Removing old container if exists..."
-          docker rm -f ${APP_NAME}-${NEW_COLOR} 2>/dev/null  true
+          docker rm -f ${APP_NAME}-${NEW_COLOR} 2>/dev/null || true
 
           echo "Starting new container..."
           docker run -d \
@@ -206,7 +206,7 @@ pipeline {
     stage('Cleanup Old Version') {
       steps {
         sh '''
-          docker rm -f ${APP_NAME}-${ACTIVE_COLOR}  true
+          docker rm -f ${APP_NAME}-${ACTIVE_COLOR} || true
         '''
       }
     }
@@ -243,12 +243,12 @@ EOF
     "text": "❌ Deployment Failed\nProject: $JOB_NAME\nBuild: #$BUILD_NUMBER"
   }
 EOF
-          curl -v https://hooks.slack.com  true
+          curl -v https://hooks.slack.com || true
 
           curl -s -o /dev/null -X POST \
             -H "Content-type: application/json" \
             --data @slack.json \
-            "$SLACK_URL"  true
+            "$SLACK_URL" || true
         '''
       }
     }
