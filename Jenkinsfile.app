@@ -112,7 +112,12 @@ pipeline {
     }
 
     stage('Deploy New Version') {
- 
+      when {
+        anyof {
+          branch 'develop'
+          branch 'main'
+        }
+      } 
       steps {
         sh '''#!/bin/bash
           set -e
@@ -139,6 +144,12 @@ pipeline {
     }
 
     stage('Health Check') {
+      when {
+        anyof {
+          branch 'develop'
+          branch 'main'
+        }
+      }
       steps {
         script {
           echo "Starting health check for ${NEW_COLOR} on http://localhost:${NEW_PORT}"

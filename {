@@ -1,0 +1,168 @@
+Script started on 2026-02-21 21:28:57+03:30 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="90" LINES="49"]
+          echo "Starting health check for ${NEW_COLOR} on http://localhost:${NEW_PORT}"
+          sleep 5
+
+          retry(5) {
+            def status = sh(
+              script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:${NEW_PORT}",
+              returnStdout: true
+            ).trim()
+
+            if (status != "200") {
+              error("App not ready yet")
+            }
+          }
+
+          echo "Application is healthy ✅"
+        }
+      }
+    }
+
+    stage('Production Approve') {
+      when {
+        branch 'main'
+      }
+      steps {
+        timeout(time: 2, unit: 'MINUTES') {
+          input message: "Deploy to PRODUCTION?", ok: "Deploy"
+        }
+      }
+    }
+
+    stage('Switch Traffic') {
+      steps {
+        script {
+          sh """
+            mkdir -p nginx/conf.d
+
+            sed "s/{{ACTIVE_COLOR}}/${NEW_COLOR}/" \
+              nginx/template/upstream.conf.tpl \
+              > nginx/conf.d/upstream.conf
+
+            docker exec nginx nginx -s reload
+          """
+        }
+      }
+    }
+
+    stage('Cleanup Old Version') {
+      steps {
+        sh "docker rm -f ${APP_NAME}-${ACTIVE_COLOR} || true"
+      }
+    }
+  }
+
+  post {
+
+    success {
+      script {
+        withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+          sh(returnStatus: true, script: '''
+            payload=$(cat <<EOF
+{
+  "text": "✅ Deployment Successful\nProject: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}"
+}
+EOF
+)
+            curl -s -o /dev/null -X POST \
+              -H "Content-type: application/json" \
+              --data "$payload" \
+              "$SLACK_URL"
+          ''')
+        }
+      }
+    }
+
+    failure {
+      script {
+        withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+          sh(returnStatus: true, script: '''
+            payload=$(cat <<EOF
+{
+  "text": "❌ Deployment Failed\nProject: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}"
+}
+EOF
+)
+            curl -s -o /dev/null -X POST \
+              -H "Content-type: application/json" \
+              --data "$payload" \
+              "$SLACK_URL"
+          ''')
+        }
+      }
+    }
+  }
+}[?2004h]0;ali-sanei@ali-sanei: ~/devops-lab/onprem-devops-infrastructure[01;32mali-sanei@ali-sanei[00m:[01;34m~/devops-lab/onprem-devops-infrastructure[00m$           echo "Starting health check for ${NEW_COLOR} on http://localhost:${NEW_PORT}"
+[?2004lStarting health check for  on http://localhost:
+[?2004h]0;ali-sanei@ali-sanei: ~/devops-lab/onprem-devops-infrastructure[01;32mali-sanei@ali-sanei[00m:[01;34m~/devops-lab/onprem-devops-infrastructure[00m$           sleep 5
+[?2004l^C
+[?2004h]0;ali-sanei@ali-sanei: ~/devops-lab/onprem-devops-infrastructure[01;32mali-sanei@ali-sanei[00m:[01;34m~/devops-lab/onprem-devops-infrastructure[00m$ gt[Kit push origin main
+[?2004lUsername for 'https://github.com': toofan2088@gmail,=  .com
+Password for 'https://toofan2088%40gmail.com@github.com': 
+Enumerating objects: 5, done.
+Counting objects:  20% (1/5)Counting objects:  40% (2/5)Counting objects:  60% (3/5)Counting objects:  80% (4/5)Counting objects: 100% (5/5)Counting objects: 100% (5/5), done.
+Delta compression using up to 8 threads
+Compressing objects:  33% (1/3)Compressing objects:  66% (2/3)Compressing objects: 100% (3/3)Compressing objects: 100% (3/3), done.
+Writing objects:  33% (1/3)Writing objects:  66% (2/3)Writing objects: 100% (3/3)Writing objects: 100% (3/3), 744 bytes | 744.00 KiB/s, done.
+Total 3 (delta 2), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas:   0% (0/2)[Kremote: Resolving deltas:  50% (1/2)[Kremote: Resolving deltas: 100% (2/2)[Kremote: Resolving deltas: 100% (2/2), completed with 2 local objects.[K
+To https://github.com/Ali-Sanei/onprem-devops-infrastructure
+   836a6f9..afb9052  main -> main
+[?2004h]0;ali-sanei@ali-sanei: ~/devops-lab/onprem-devops-infrastructure[01;32mali-sanei@ali-sanei[00m:[01;34m~/devops-lab/onprem-devops-infrastructure[00m$ vim Jenkinsfile.app
+[?2004l[?1049h[22;0;0t[>4;2m[?1h=[?2004h[?1004h[1;49r[?12h[?12l[22;2t[22;1t[27m[23m[29m[m[H[2J[?25l[49;1H"Jenkinsfile.app" 243L, 5776B[2;1H▽[6n[2;1H  [3;1HPzz\[0%m[6n[3;1H           [1;1H[>c]10;?]11;?[1;5Hstage('Cleanup Old Version') {
+      steps {[2;14H[K[3;1H        sh "docker rm -f ${APP_NAME}-${ACTIVE_COLOR} || true"[3;62H[K[4;7H}
+    }
+  }
+
+  post {[10;5Hsuccess {[11;7Hscript {[12;9HwithCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {[13;11Hsh(returnStatus: true, script: '''[14;13Hpayload=$(cat <<EOF
+{
+  "text": "✅[16;15HDeployment Successful\nProject: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}"
+}
+EOF
+)[20;13Hcurl -s -o /dev/null -X POST \[21;15H-H "Content-type: application/json" \[22;15H--data "$payload" \[23;15H"$SLACK_URL"[24;11H''')[25;9H}[26;7H}
+    }[29;5Hfailure {[30;7Hscript {[31;9HwithCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {[32;11Hsh(returnStatus: true, script: '''[33;13Hpayload=$(cat <<EOF
+{
+  "text": "❌[35;15HDeployment Failed\nProject: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}"
+}
+EOF
+)[39;13Hcurl -s -o /dev/null -X POST \[40;15H-H "Content-type: application/json" \[41;15H--data "$payload" \[42;15H"$SLACK_URL"[43;11H''')[44;9H}[45;7H}
+    }
+  }
+}[49;73H243,1[9CBot[48;1H[?25h[?4m[?12$p[?25l[49;63Hb[48;1H[49;64H:[48;1H[49;65H0[48;1H[49;66Hc[48;1H[49;67H0[48;1H[49;68Hc[48;1H[49;69H/[48;1H[49;70H0[48;1H[49;71Hc[48;1H[49;72H0[48;1H[49;63H          [48;1H[27m[23m[29m[m[H[2J[1;5Hstage('Cleanup Old Version') {[2;7Hsteps {[3;9Hsh "docker rm -f ${APP_NAME}-${ACTIVE_COLOR} || true"[4;7H}
+    }
+  }
+
+  post {[10;5Hsuccess {[11;7Hscript {[12;9HwithCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {[13;11Hsh(returnStatus: true, script: '''[14;13Hpayload=$(cat <<EOF
+{
+  "text": "✅[16;15HDeployment Successful\nProject: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}"
+}
+EOF
+)[20;13Hcurl -s -o /dev/null -X POST \[21;15H-H "Content-type: application/json" \[22;15H--data "$payload" \[23;15H"$SLACK_URL"[24;11H''')[25;9H}[26;7H}
+    }[29;5Hfailure {[30;7Hscript {[31;9HwithCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {[32;11Hsh(returnStatus: true, script: '''[33;13Hpayload=$(cat <<EOF
+{
+  "text": "❌[35;15HDeployment Failed\nProject: ${JOB_NAME}\nBuild: #${BUILD_NUMBER}"
+}
+EOF
+)[39;13Hcurl -s -o /dev/null -X POST \[40;15H-H "Content-type: application/json" \[41;15H--data "$payload" \[42;15H"$SLACK_URL"[43;11H''')[44;9H}[45;7H}
+    }
+  }
+}[49;73H243,1[9CBot"Jenkinsfile.app" 243L, 5776B[48;1H[?25h[?25l[49;63H~@k[48;1H[49;63H   [47;1H[49;75H2[47;1H[?25h[?25l[49;63H~@k[47;1H[49;63H   [46;1H[49;75H1[46;1H[?25h[?25l[49;63H~@k[46;1H[49;63H   [45;1H[49;75H0[45;1H[?25h[?25l[49;63H~@k[45;1H[49;63H   [44;1H[49;74H39[44;1H[?25h[?25l[49;75H8[43;1H[?25h[?25l[49;63H~@k[43;1H[49;63H   [42;1H[49;75H7[42;1H[?25h[?25l[49;63H~@k[42;1H[49;63H   [41;1H[49;75H6[41;1H[?25h[?25l[49;63H~@k[41;1H[49;63H   [40;1H[49;75H5[40;1H[?25h[?25l[49;63H~@k[40;1H[49;63H   [39;1H[49;75H4[39;1H[?25h[?25l[49;63H~@k[39;1H[49;63H   [38;1H[33;22H[46m([38;1H)[m[49;75H3[38;1H[?25h[?25l[49;63H~@k[38;1H[49;63H   [37;1H[33;22H([38;1H)[49;75H2[37;1H[?25h[?25l[49;63H~@k[37;1H[49;63H   [36;1H[34;1H[46m{
+
+}[m[49;75H1[36;1H[?25h[?25l[49;63H~@k[36;1H[49;63H   [35;1H[34;1H{
+
+}[49;75H0[35;1H[?25h[?25l[49;63H~@k[35;1H[49;63H   [34;1H[46m{
+
+}[m[49;74H29[34;1H[?25h[?25l[49;63H~@k[34;1H[49;63H   [33;1H
+{
+
+}[49;75H8[33;1H[?25h[?25l[49;75H7[32;1H[?25h[?25l[49;63H~@k[32;1H[49;63H   [31;1H[49;75H6[31;1H[?25h[?25l[49;63H~@k[31;1H[49;63H   [30;1H[49;75H5[30;1H[?25h[?25l[49;63H~@k[30;1H[49;63H   [29;1H[49;75H4[29;1H[?25h[?25l[49;63H~@k[29;1H[49;63H   [28;1H[49;75H3,0-1[28;1H[?25h[?25l[49;63H~@k[28;1H[49;63H   [27;1H[49;75H2,1  [27;1H[?25h[?25l[49;63H~@k[27;1H[49;63H   [26;1H[49;75H1[26;1H[?25h[?25l[49;63H~@k[26;1H[49;63H   [25;1H[49;75H0[25;1H[?25h[?25l[49;63H~@k[25;1H[49;63H   [24;1H[49;74H19[24;1H[?25h[?25l[49;63H~@k[24;1H[49;63H   [23;1H[49;75H8[23;1H[?25h[?25l[49;63H~@k[23;1H[49;63H   [22;1H[49;75H7[22;1H[?25h[?25l[49;75H6[21;1H[?25h[?25l[49;63H~@k[21;1H[49;63H   [20;1H[49;75H5[20;1H[?25h[?25l[14;22H[46m([19;1H)[m[49;75H4[19;1H[?25h[?25l[49;63H~@k[19;1H[49;63H   [18;1H[14;22H([19;1H)[49;75H3[18;1H[?25h[?25l[49;63H~@k[18;1H[49;63H   [17;1H[15;1H[46m{
+
+}[m[49;75H2[17;1H[?25h[?25l[49;63H~@k[17;1H[49;63H   [16;1H[15;1H{
+
+}[49;75H1[16;1H[?25h[?25l[49;63H~@k[16;1H[49;63H   [15;1H[46m{
+
+}[m[49;75H0[15;1H[?25h[?25l[49;63H~@k[15;1H[49;63H   [14;1H
+{
+
+}[49;74H09[14;1H[?25h[?25l[49;63H~@k[14;1H[49;63H   [13;1H[49;75H8[13;1H[?25h[?25l[49;75H7[12;1H[?25h[?25l[49;63H~@k[12;1H[49;63H   [11;1H[49;75H6[11;1H[?25h[?25l[49;63H~@k[11;1H[49;63H   [10;1H[49;75H5[10;1H[?25h[?25l[49;63H~@k[10;1H[49;63H   [9;1H[49;75H4,0-1[9;1H[?25h[?25l[49;63H~@k[9;1H[49;63H   [8;1H[49;75H3,1  [8;1H[?25h[?25l[49;63H~@k[8;1H[49;63H   [7;1H[49;75H2,0-1[7;1H[?25h[?25l[49;63H~@k[7;1H[49;63H   [6;1H[49;75H1,1  [6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[49;1H[K[49;73H200,1[9C99%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;5H}[49;73H[K[49;73H199,1[9C98%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;7H}[49;73H[K[49;73H198,1[9C98%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;9H}[49;73H[K[49;73H197,1[9C97%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;11H"""[49;73H[K[49;73H196,1[9C97%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13Hdocker exec nginx nginx -s reload[49;73H[K[49;73H195,0-1[7C96%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[49;73H[K[49;73H194,1[9C96%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;15H> nginx/conf.d/upstream.conf[49;73H[K[49;73H193,1[9C95%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;15Hnginx/template/upstream.conf.tpl \[49;73H[K[49;73H192,1[9C95%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13Hsed "s/{{ACTIVE_COLOR}}/${NEW_COLOR}/" \[49;73H[K[49;73H191,1[9C94%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[49;73H[K[49;73H190,1[9C94%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13Hmkdir -p nginx/conf.d[49;73H[K[49;73H189,0-1[7C93%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;11Hsh """[49;73H[K[49;73H188,1[9C93%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;9Hscript {[49;73H[K[49;73H187,1[9C92%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;7Hsteps {[49;73H[K[49;73H186,1[9C92%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;5Hstage('Switch Traffic') {[49;73H[K[49;73H185,0-1[7C91%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[49;73H[K[49;73H184,1[9C91%[6;1H[?25h[?25l[1;48r[1;1H[L[1;49r[1;5H}[49;73H[K[49;73H183,1[9C90%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;7H}[49;73H[K[49;73H182,1[9C90%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;9H}[49;73H[K[49;73H181,1[9C89%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;11Hinput message: "Deploy to PRODUCTION?", ok: "Deploy"[49;73H[K[49;73H180,1[9C89%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;9Htimeout(time: 2, unit: 'MINUTES') {[49;73H[K[49;73H179,0-1[7C88%[6;1H[?25h[?25l[1;48r[1;1H[L[1;49r[1;7Hsteps {[49;73H[K[49;73H178,1[9C88%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;7H}[49;73H[K[49;73H177,1[9C87%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;9Hbranch 'main'[49;73H[K[49;73H176,1[9C87%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;7Hwhen {[49;73H[K[49;73H175,1[9C86%[6;1H[?25h[?25l[1;48r[1;1H[L[1;49r[1;5Hstage('Production Approve') {[49;73H[K[49;73H174,1[9C86%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[49;73H[K[49;73H173,1[9C85%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;5H}[49;73H[K[49;73H172,1[9C85%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;7H}[49;73H[K[49;73H171,1[9C84%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;9H}[49;73H[K[49;73H170,1[9C84%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;11Hecho "Application is healthy ✅[1;42H"[49;73H[K[49;73H169,1[9C83%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[49;73H[K[49;73H168,0-1[7C83%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;11H}[49;73H[K[49;73H167,1[9C82%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13H}[49;73H[K[49;73H166,1[9C82%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;15Herror("App not ready yet")[49;73H[K[49;73H165,1[9C81%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13Hif (status != "200") {[49;73H[K[49;73H164,1[9C81%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[49;73H[K[49;73H163,0-1[7C80%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13H).trim()[49;73H[K[49;73H162,1[9C80%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;15HreturnStdout: true[49;73H[K[49;73H161,1[9C79%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [7;1H[1;48r[1;1H[2L[1;49r[1;15Hscript: "curl -s -o /dev/null -w '%{http_code}' http://localhost:${NEW_PORT}}[2;1H",[49;73H[K[49;73H160,1[9C78%[7;1H[?25h[?25l[49;63H~@k[7;1H[49;63H   [6;1H[49;74H59[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13Hdef status = sh([49;73H[K[49;73H158,0-1[7C78%[6;1H[?25h[?25l[1;48r[1;1H[L[1;49r[1;11Hretry(5) {[49;73H[K[49;73H157,1[9C77%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[49;73H[K[49;73H156,1[9C77%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[2L[1;49r[1;11Hecho "Starting health check for ${NEW_COLOR} on http://localhost:${NEW_PORT}"[2;11Hsleep 5[49;73H[K[49;73H155,1[9C76%[6;1H[?25h[?25l[1;48r[1;1H[L[1;49r[1;9Hscript {[49;73H[K[49;73H154,1[9C75%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;7Hsteps {[49;73H[K[49;73H153,1[9C75%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;5Hstage('Health Check') {[49;73H[K[49;73H152,0-1[7C74%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[49;73H[K[49;73H151,1[9C73%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;5H}[49;73H[K[49;73H150,1[9C73%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;7H}[49;73H[K[49;73H149,1[9C72%[6;1H[?25h[?25l[1;48r[1;1H[L[1;49r[1;9H'''[49;73H[K[49;73H148,1[9C72%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;11Hecho "Container ${APP_NAME}-${NEW_COLOR} started on port ${NEW_PORT}"[49;73H[K[49;73H147,1[9C71%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[49;73H[K[49;73H146,0-1[7C71%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13H${DOCKER_IMAGE}:${GIT_SHA}[49;73H[K[49;73H145,1[9C70%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13H--restart=always \[49;73H[K[49;73H144,1[9C70%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13H--cpus="0.5" \[49;73H[K[49;73H143,1[9C69%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13H--memory="128m" \[49;73H[K[49;73H142,1[9C69%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13H-p ${NEW_PORT}:8080 \[49;73H[K[49;73H141,0-1[7C68%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13H--network ${NETWORK} \[49;73H[K[49;73H140,1[9C68%[6;1H[?25h[?25l[49;63H~@k[6;1H[49;63H   [6;1H[1;48r[1;1H[L[1;49r[1;13H--name ${APP_NAME}-${NEW_COLOR} \[49;73H[K[49;73H139,1[9C67%[6;1H[?25h
+Script done on 2026-02-22 01:02:15+03:30 [COMMAND_EXIT_CODE="0"]
