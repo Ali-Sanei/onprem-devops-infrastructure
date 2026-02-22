@@ -112,13 +112,7 @@ pipeline {
     }
 
     stage('Deploy New Version') {
-      when {
-        anyOf {
-          branch 'develop'
-          branch 'main'
-        }
-      }
-
+ 
       steps {
         sh '''#!/bin/bash
           set -e
